@@ -3,6 +3,7 @@ from flask_pymongo import PyMongo, ObjectId
 from flask_cors import CORS
 from database import database
 import socket
+from flask import request, jsonify
 
 host_name = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
@@ -19,11 +20,14 @@ users = db['users']
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route('/users', methods=['GET'])
 def get_users():
     return
 
-from flask import request, jsonify
+
+
+
 
 @app.route('/user/', methods=['POST'])
 def add_user():
@@ -43,13 +47,16 @@ def add_user():
 def get_user_by_id(id):
     return
 
+
 @app.route('/user/<id>', methods=['PUT'])
 def update_user(id):
     return
 
+
 @app.route('/user/<id>', methods=['DELETE'])
 def delete_user(id):
     return jsonify({"message": "User deleted successfully"})
+
 
 # Flask Server
 @app.route('/get_server_ip', methods=['GET'])
@@ -59,4 +66,3 @@ def get_server_ip():
 
 if __name__ == "__main__":
     app.run(host=host_ip, port=5000, debug=False)
-
