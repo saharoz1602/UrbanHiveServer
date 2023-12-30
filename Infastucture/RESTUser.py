@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
-from flask_pymongo import PyMongo, ObjectId
 from flask_cors import CORS
 from database import database
 import socket
-from flask import jsonify, request, abort
 from pymongo.errors import DuplicateKeyError
+from flask import jsonify, request, abort
+from pymongo import ReturnDocument
 from Entities.User import User
 
 host_name = socket.gethostname()
@@ -15,9 +15,6 @@ db = dbase.db
 
 # Access a collection named 'users'
 users = db['users']
-
-# Insert a document into the 'users' collection
-# users.insert_one({"name": "John", "email": "john@example.com"})
 
 app = Flask(__name__)
 CORS(app)
@@ -74,8 +71,6 @@ def add_user():
     return jsonify({"message": "User added successfully", "user": user_data}), 201
 
 
-from flask import jsonify, abort
-
 @app.route('/user/<user_id>', methods=['GET'])
 def get_user_by_id(user_id):
     # Fetch the user from the MongoDB collection using the provided id
@@ -96,11 +91,14 @@ def get_user_by_id(user_id):
     return jsonify(user), 200
 
 
-
 @app.route('/user/<user_id>', methods=['PUT'])
 def update_user(user_id):
     # Get the JSON data from the request
     update_data = request.get_json()
+
+    # Ensure the update data does not contain '_id' or 'id'
+    update_data.pop('_id', None)
+    update_data.pop('id', None)
 
     # Find the user in the MongoDB collection
     user = users.find_one({"id": user_id})
@@ -109,21 +107,30 @@ def update_user(user_id):
     if user is None:
         abort(404, description="User not found")
 
-    # Update the user's data in the database
-    # Note: This will update the fields provided in the request and leave others unchanged
-    users.update_one({"id": user_id}, {"$set": update_data})
+    try:
+        # Update the user's data in the database
+        # Note: This will update the fields provided in the request and leave others unchanged
+        updated_user = users.find_one_and_update(
+            {"id": user_id},
+            {"$set": update_data},
+            return_document=ReturnDocument.AFTER
+        )
 
-    # Fetch the updated user data
-    updated_user = users.find_one({"id": user_id})
+        # If the update operation did not find the user, return a 404 Not Found response
+        if updated_user is None:
+            abort(404, description="User not found after attempting update")
 
-    # Convert ObjectId to string for the response
-    updated_user["_id"] = str(updated_user["_id"])
+        # Convert ObjectId to string for the response
+        updated_user['_id'] = str(updated_user['_id'])
 
-    # Exclude sensitive data like password from the response
-    updated_user.pop('password', None)
+        # Exclude sensitive data like password from the response
+        updated_user.pop('password', None)
 
-    # Return the updated user data
-    return jsonify(updated_user), 200
+        # Return the updated user data
+        return jsonify(updated_user), 200
+    except Exception as e:
+        # If an error occurs during the update, return a 500 Internal Server Error response
+        abort(500, description=str(e))
 
 
 @app.route('/user/<user_id>', methods=['DELETE'])
@@ -139,6 +146,25 @@ def delete_user(user_id):
     # Return a success message
     return jsonify({"message": "User deleted successfully"}), 200
 
+
+@app.route('/password/', methods=['GET'])
+def check_user_password():
+    # Retrieve ID and password from request args
+    user_id = request.args.get('id')
+    password = request.args.get('password')
+
+    # Validate if both ID and password are provided
+    if not user_id or not password:
+        return jsonify({"error": "ID and password are required"}), 400
+
+    # Fetch the user from the MongoDB collection using the provided id
+    user = users.find_one({"id": user_id})
+
+    # Check if the user exists and the password matches
+    if user and user.get('password') == password:
+        return jsonify({"result": True}), 200
+    else:
+        return jsonify({"result": False}), 404
 
 
 
