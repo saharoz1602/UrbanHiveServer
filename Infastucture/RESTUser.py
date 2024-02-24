@@ -147,25 +147,30 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully"}), 200
 
 
-@app.route('/password/', methods=['GET'])
+@app.route('/password', methods=['POST'])
 def check_user_password():
-    # Retrieve ID and password from request args
-    user_id = request.args.get('id')
-    password = request.args.get('password')
+    # Retrieve ID and password from request JSON
+    user_data = request.get_json()
 
     # Validate if both ID and password are provided
-    if not user_id or not password:
+    if not user_data or 'id' not in user_data or 'password' not in user_data:
         return jsonify({"error": "ID and password are required"}), 400
 
-    # Fetch the user from the MongoDB collection using the provided id
-    user = users.find_one({"id": user_id})
+    # Use the get_user_by_id function to fetch the user
+    response = get_user_by_id(user_data['id'])
 
-    # Check if the user exists and the password matches
-    if user and user.get('password') == password:
-        return jsonify({"result": True}), 200
+    # If the user is not found, response will have status code 404
+    if response.status_code == 404:
+        return jsonify({"result": "False"}), 404
+
+    # Get the user object from the response
+    user = response.get_json()
+
+    # Check if the password matches
+    if user.get('password') == user_data['password']:
+        return jsonify({"result": "True"}), 200
     else:
-        return jsonify({"result": False}), 404
-
+        return jsonify({"result": "False"}), 404
 
 
 # Flask Server
