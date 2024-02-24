@@ -98,4 +98,57 @@ curl -X POST http://192.168.1.143:5000/user/delete-friend \
      -d '{"receiver_id": "311285514", "sender_id": "311156616"}'
 
 
+———————————————————
+
+add community
+
+curl -X POST http://192.168.1.143:5000/communities/add_community \
+     -H "Content-Type: application/json" \
+     -d '{
+          "manager_id": "311156616",
+          "area": "Kerem Street"
+         }'
+
+———————————————————
+
+add user to community
+
+curl -X POST http://192.168.1.143:5000/communities/add_user_to_community \
+     -H "Content-Type: application/json" \
+     -d '{
+          "receiver_id": "311285514",
+          "sender_id": "311156616",
+          "community area": "Kerem Street"
+         }'
+
+
+———————————————————
+respond to community request
+
+curl -X POST http://192.168.1.143:5000/communities/respond_to_community_request \
+     -H "Content-Type: application/json" \
+     -d '{
+          "receiver_id": "311285514",
+          "sender_id": "311156616",
+          "response": 1,
+          "area": "Kerem Street"
+         }'
+
+
+———————————————————
+delete user from community
+
+curl -X POST http://192.168.1.143:5000/communities/delete_user_from_community \
+     -H "Content-Type: application/json" \
+     -d '{
+          "user_to_delete_id": "311285514",
+          "area": "Kerem Street"
+         }'
+
+
+
+
+
+
+
 
