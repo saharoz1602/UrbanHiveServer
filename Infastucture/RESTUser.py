@@ -169,3 +169,41 @@ def check_user_password():
         return jsonify({"result": "True"}), 200
     else:
         return jsonify({"result": "False"}), 401  # Changed to 401 to indicate unauthorized access
+
+
+@user_bp.route('/user/change-password', methods=['POST'])
+def change_password():
+    # Retrieve the password details and user id from the request JSON
+    password_data = request.get_json()
+
+    # Validate if all required fields are provided
+    required_fields = ['id', 'new_password', 'verify_new_password']
+    if not all(field in password_data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Validate if the new_password and verify_new_password match
+    if password_data['new_password'] != password_data['verify_new_password']:
+        return jsonify({"error": "Passwords do not match"}), 400
+
+    # Validate if the password fields are not empty
+    if not password_data['new_password'] or not password_data['verify_new_password']:
+        return jsonify({"error": "Password cannot be empty"}), 400
+
+    # Fetch the user from the MongoDB collection using the provided id
+    user = users.find_one({"id": password_data['id']})
+
+    # If the user is not found, return a 404 Not Found response
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    # Update the user's password
+    try:
+        users.update_one(
+            {"id": password_data['id']},
+            {"$set": {"password": password_data['new_password']}}
+        )
+        return jsonify({"message": "Password updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
