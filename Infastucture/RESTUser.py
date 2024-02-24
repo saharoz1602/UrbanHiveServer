@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, abort
 from database import database  # Ensure this is accessible from this module
 from pymongo.errors import DuplicateKeyError
-from pymongo import ReturnDocument
+from pymongo import ReturnDocument, errors
 
 # Initialize database connection
 dbase = database()
@@ -32,35 +32,44 @@ def get_users():
 def add_user():
     """
     EXAMPLE OF USER OBJECT IN THE MONGO DB
-    {
-      "name": "dadsor",
-      "email": "dandss@gmail.com",
-      "password": "danors93",
-      "id": "255321353"
-    }
+    "{
+    "id":"311156616",
+      "name":"danor",
+      "email":"danors@gmail.com",
+      "password":"Ds0502660865",
+      "location":{
+                "latitude":37.4219909,
+                "longitude":-122.0839496}}"
+      )
     """
-    # Get JSON data from the request
     user_data = request.get_json()
 
-    # Check if the 'id' field is present in the user data
-    if 'id' not in user_data:
-        abort(400, description="id field is required")
+    # Check for required fields
+    required_fields = ["id", "name", "email", "password", "location"]
+    if not all(field in user_data for field in required_fields):
+        abort(400, description="Missing required field(s)")
 
-    # Check if a user with the same ID already exists
-    if users.find_one({"id": user_data["id"]}) is not None:
-        return jsonify({"message": "User with this ID already exists"}), 409
+    # Check for location sub-fields
+    if not all(field in user_data["location"] for field in ["latitude", "longitude"]):
+        abort(400, description="Missing required location field(s)")
+
+    # Validate data types
+    if not isinstance(user_data["location"]["latitude"], (float, int)) or \
+            not isinstance(user_data["location"]["longitude"], (float, int)):
+        abort(400, description="Invalid data type for latitude or longitude")
+
+    # Check if a user with the same ID or email already exists
+    if users.find_one({"$or": [{"id": user_data["id"]}, {"email": user_data["email"]}]}):
+        return jsonify({"message": "User with this ID or email already exists"}), 409
 
     try:
         # Insert the user data into the MongoDB collection
         inserted = users.insert_one(user_data)
-    except DuplicateKeyError:
-        # Handle the case where the insertion fails due to a duplicate key (e.g., email)
-        return jsonify({"message": "User with this data already exists"}), 409
-
-    # Convert ObjectId to string
-    user_data["_id"] = str(inserted.inserted_id)
-
-    return jsonify({"message": "User added successfully", "user": user_data}), 201
+        # Convert ObjectId to string
+        user_data["_id"] = str(inserted.inserted_id)
+        return jsonify({"message": "User added successfully", "user": user_data}), 201
+    except errors.DuplicateKeyError as e:
+        return jsonify({"error": "User with this data already exists", "detail": str(e)}), 409
 
 
 @user_bp.route('/user/<user_id>', methods=['GET'])

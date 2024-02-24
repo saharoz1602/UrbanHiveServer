@@ -1,10 +1,18 @@
 
 #add user
 
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"name":"dadsor","email":"dandss@gmail.com","password":"danors93","id":"255321353"}' \
-  http://192.168.1.143:5000/user/
+  curl -X POST http://192.168.1.143:5000/user/ \
+     -H "Content-Type: application/json" \
+     -d '{
+          "id": "311156616",
+          "name": "danor",
+          "email": "danors@gmail.com",
+          "password": "Ds0502660865",
+          "location": {
+            "latitude": 37.4219909,
+            "longitude": -122.0839496
+          }
+         }'
 
 
 ————————————————————
