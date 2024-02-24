@@ -13,6 +13,19 @@
             "longitude": -122.0839496
           }
          }'
+- - - - - - - - - -
+    curl -X POST http://192.168.1.143:5000/user/ \
+     -H "Content-Type: application/json" \
+     -d '{
+          "id": "311285514",
+          "name": "sahar",
+          "email": "sahar@gmail.com",
+          "password": "123456789",
+          "location": {
+            "latitude": 37.4679909,
+            "longitude": -122.0845496
+          }
+         }'
 
 
 ————————————————————
@@ -56,6 +69,15 @@ update user radius
 curl -X PUT http://192.168.1.143:5000/user/311156616/radius \
      -H "Content-Type: application/json" \
      -d '{"radius": 5.0}'
+
+———————————————————
+
+add friend
+
+curl -X POST http://192.168.1.143:5000/user/add-friend \
+     -H 'Content-Type: application/json' \
+     -d '{"sender_id": "311156616", "receiver_id": "311285514"}'
+
 
 
 

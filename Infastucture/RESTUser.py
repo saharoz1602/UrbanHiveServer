@@ -249,3 +249,41 @@ def update_user_radius(user_id):
     result.pop('password', None)
 
     return jsonify({"message": "Radius updated successfully", "user": result}), 200
+
+
+@user_bp.route('/user/add-friend', methods=['POST'])
+def add_friend():
+    data = request.get_json()
+
+    # Extract sender_id and receiver_id from the request data
+    sender_id = data.get('sender_id')
+    receiver_id = data.get('receiver_id')
+
+    # Check if both sender and receiver IDs are provided
+    if not sender_id or not receiver_id:
+        return jsonify({"error": "Both sender_id and receiver_id are required"}), 400
+
+    # Check if sender and receiver are the same
+    if sender_id == receiver_id:
+        return jsonify({"error": "Sender and receiver cannot be the same"}), 400
+
+    # Verify both users exist
+    sender = users.find_one({"id": sender_id})
+    receiver = users.find_one({"id": receiver_id})
+
+    if sender is None or receiver is None:
+        return jsonify({"error": "Both users must exist"}), 404
+
+    # Prepare the request objects for sender and receiver
+    sender_request = {"id": receiver_id, "status": "pending"}
+    receiver_request = {"id": sender_id, "status": "wait for response"}
+
+    # Update the sender and receiver 'requests' arrays
+    try:
+        users.update_one({"id": sender_id}, {"$push": {"requests": sender_request}})
+        users.update_one({"id": receiver_id}, {"$push": {"requests": receiver_request}})
+        return jsonify({"message": "Friend request sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
