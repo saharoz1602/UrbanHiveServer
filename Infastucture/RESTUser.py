@@ -1,10 +1,10 @@
 from flask import Blueprint, jsonify, request, abort
-from database import database  # Ensure this is accessible from this module
+from database import DataBase  # Ensure this is accessible from this module
 from pymongo.errors import DuplicateKeyError
 from pymongo import ReturnDocument, errors
 
 # Initialize database connection
-dbase = database()
+dbase = DataBase()
 db = dbase.db
 users = db['users']
 
@@ -55,7 +55,8 @@ def add_user():
 
     # Validate data types
     if not isinstance(user_data["location"]["latitude"], (float, int)) or \
-            not isinstance(user_data["location"]["longitude"], (float, int)):
+            not isinstance(user_data["location"]["longitude"], (float, int)) or \
+            not isinstance(user_data["location"]["longitude"], (float, float)):
         abort(400, description="Invalid data type for latitude or longitude")
 
     # Check if a user with the same ID or email already exists
@@ -148,7 +149,7 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully"}), 200
 
 
-@user_bp.route('/password', methods=['POST'])
+@user_bp.route('/users/password', methods=['POST'])
 def check_user_password():
     # Retrieve ID and password from request JSON
     user_data = request.get_json()
@@ -205,5 +206,3 @@ def change_password():
         return jsonify({"message": "Password updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-

@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 
-class database:
+class DataBase:
 
     def __init__(self):
         # Connect to the local MongoDB instance running on the default port 27017
