@@ -131,3 +131,5 @@ def delete_user_from_community():
         return jsonify({"message": "User removed from community successfully"}), 200
     except errors.PyMongoError as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
