@@ -148,18 +148,15 @@ def check_user_password():
     if not user_data or 'id' not in user_data or 'password' not in user_data:
         return jsonify({"error": "ID and password are required"}), 400
 
-    # Use the get_user_by_id function to fetch the user
-    response = get_user_by_id(user_data['id'])
+    # Fetch the user from the MongoDB collection using the provided id
+    user = users.find_one({"id": user_data['id']})
 
-    # If the user is not found, response will have status code 404
-    if response.status_code == 404:
+    # If the user is not found, return a 404 Not Found response
+    if user is None:
         return jsonify({"result": "False"}), 404
-
-    # Get the user object from the response
-    user = response.get_json()
 
     # Check if the password matches
     if user.get('password') == user_data['password']:
         return jsonify({"result": "True"}), 200
     else:
-        return jsonify({"result": "False"}), 404
+        return jsonify({"result": "False"}), 401  # Changed to 401 to indicate unauthorized access

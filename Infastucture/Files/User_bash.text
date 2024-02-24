@@ -15,7 +15,7 @@ curl -X POST \
 URL="http://192.168.1.143:5000/users"
 
 # Making a GET request to the URL
-curl -X GET "$URL"
+curl -X GET http://<$URL>>
 
 ———————————————————
 #Get user by id
@@ -28,6 +28,11 @@ delete user
 curl -X DELETE http://192.168.1.143:5000/user/<USER_ID> -----> put the id like that no <> needed : 1234
 
 ———————————————————
+
+check user password
+
+curl -X POST http://192.168.1.143:5000/password -H "Content-Type: application/json" -d '{"id":"12345", "password":"danors93"}'
+
 
 
 
