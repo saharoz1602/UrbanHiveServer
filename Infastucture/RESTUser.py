@@ -287,3 +287,78 @@ def add_friend():
         return jsonify({"error": str(e)}), 500
 
 
+@user_bp.route('/user/respond-to-request', methods=['POST'])
+def respond_to_request():
+    data = request.get_json()
+
+    receiver_id = data.get('receiver_id')
+    sender_id = data.get('sender_id')
+    response = data.get('response')  # 1 for approve, 0 for decline
+
+    # Fetch both sender and receiver from the database
+    sender = users.find_one({"id": sender_id})
+    receiver = users.find_one({"id": receiver_id})
+
+    if not sender or not receiver:
+        return jsonify({"error": "Sender and receiver must exist"}), 404
+
+    if response == 1:  # Approve
+        # Prepare friend information for both sender and receiver
+        sender_friend_info = {
+            "friend name": receiver["name"],
+            "friend id": receiver_id,
+            "friend location": receiver["location"]
+        }
+
+        receiver_friend_info = {
+            "friend name": sender["name"],
+            "friend id": sender_id,
+            "friend location": sender["location"]
+        }
+
+        # Add each user to the other's friends list and remove the request
+        users.update_one({"id": sender_id},
+                         {"$push": {"friends": sender_friend_info}, "$pull": {"requests": {"id": receiver_id}}})
+        users.update_one({"id": receiver_id},
+                         {"$push": {"friends": receiver_friend_info}, "$pull": {"requests": {"id": sender_id}}})
+
+    elif response == 0:  # Decline
+        # Just remove the friend request from both users
+        users.update_one({"id": sender_id}, {"$pull": {"requests": {"id": receiver_id}}})
+        users.update_one({"id": receiver_id}, {"$pull": {"requests": {"id": sender_id}}})
+
+    else:
+        return jsonify({"error": "Invalid response"}), 400
+
+    return jsonify({"message": "Response processed successfully"}), 200
+
+
+@user_bp.route('/user/delete-friend', methods=['POST'])
+def delete_friend():
+    data = request.get_json()
+
+    receiver_id = data.get('receiver_id')
+    sender_id = data.get('sender_id')
+
+    # Ensure both sender and receiver IDs are provided
+    if not receiver_id or not sender_id:
+        return jsonify({"error": "Both receiver_id and sender_id must be provided"}), 400
+
+    # Attempt to delete the receiver from the sender's friends list
+    sender_update_result = users.update_one(
+        {"id": sender_id},
+        {"$pull": {"friends": {"friend id": receiver_id}}}
+    )
+
+    # Attempt to delete the sender from the receiver's friends list
+    receiver_update_result = users.update_one(
+        {"id": receiver_id},
+        {"$pull": {"friends": {"friend id": sender_id}}}
+    )
+
+    if sender_update_result.modified_count == 0 and receiver_update_result.modified_count == 0:
+        # This means neither document was updated; possibly one of the users did not have the other in their friends
+        # list
+        return jsonify({"error": "No changes made; check if the users are actually friends"}), 404
+
+    return jsonify({"message": "Friendship deleted successfully"}), 200

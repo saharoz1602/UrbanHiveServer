@@ -79,7 +79,23 @@ curl -X POST http://192.168.1.143:5000/user/add-friend \
      -d '{"sender_id": "311156616", "receiver_id": "311285514"}'
 
 
+———————————————————
 
+respond request
+
+curl -X POST http://192.168.1.143:5000/user/respond-to-request \
+     -H 'Content-Type: application/json' \
+     -d '{"receiver_id": "311156616", "sender_id": "311285514", "response": 1}'
+
+
+
+———————————————————
+
+delete friend
+
+curl -X POST http://192.168.1.143:5000/user/delete-friend \
+     -H 'Content-Type: application/json' \
+     -d '{"receiver_id": "311285514", "sender_id": "311156616"}'
 
 
 
