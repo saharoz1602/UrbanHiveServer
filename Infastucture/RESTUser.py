@@ -1,26 +1,18 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from database import database
-import socket
+from flask import Blueprint, jsonify, request, abort
+from database import database  # Ensure this is accessible from this module
 from pymongo.errors import DuplicateKeyError
-from flask import jsonify, request, abort
 from pymongo import ReturnDocument
-from Entities.User import User
 
-host_name = socket.gethostname()
-host_ip = socket.gethostbyname(host_name)
-
+# Initialize database connection
 dbase = database()
 db = dbase.db
-
-# Access a collection named 'users'
 users = db['users']
 
-app = Flask(__name__)
-CORS(app)
+# Create a Flask Blueprint for the user routes
+user_bp = Blueprint('user', __name__)
 
 
-@app.route('/users', methods=['GET'])
+@user_bp.route('/users', methods=['GET'])
 def get_users():
     try:
         # Fetch all user documents from the MongoDB collection
@@ -36,7 +28,7 @@ def get_users():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/user/', methods=['POST'])
+@user_bp.route('/user/', methods=['POST'])
 def add_user():
     """
     EXAMPLE OF USER OBJECT IN THE MONGO DB
@@ -71,7 +63,7 @@ def add_user():
     return jsonify({"message": "User added successfully", "user": user_data}), 201
 
 
-@app.route('/user/<user_id>', methods=['GET'])
+@user_bp.route('/user/<user_id>', methods=['GET'])
 def get_user_by_id(user_id):
     # Fetch the user from the MongoDB collection using the provided id
     user = users.find_one({"id": user_id})
@@ -91,7 +83,7 @@ def get_user_by_id(user_id):
     return jsonify(user), 200
 
 
-@app.route('/user/<user_id>', methods=['PUT'])
+@user_bp.route('/user/<user_id>', methods=['PUT'])
 def update_user(user_id):
     # Get the JSON data from the request
     update_data = request.get_json()
@@ -133,7 +125,7 @@ def update_user(user_id):
         abort(500, description=str(e))
 
 
-@app.route('/user/<user_id>', methods=['DELETE'])
+@user_bp.route('/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     # Check if the user exists
     if users.find_one({"id": user_id}) is None:
@@ -147,7 +139,7 @@ def delete_user(user_id):
     return jsonify({"message": "User deleted successfully"}), 200
 
 
-@app.route('/password', methods=['POST'])
+@user_bp.route('/password', methods=['POST'])
 def check_user_password():
     # Retrieve ID and password from request JSON
     user_data = request.get_json()
@@ -171,13 +163,3 @@ def check_user_password():
         return jsonify({"result": "True"}), 200
     else:
         return jsonify({"result": "False"}), 404
-
-
-# Flask Server
-@app.route('/get_server_ip', methods=['GET'])
-def get_server_ip():
-    return jsonify({"server_ip": host_ip}), 200
-
-
-if __name__ == "__main__":
-    app.run(host=host_ip, port=5000, debug=False)
