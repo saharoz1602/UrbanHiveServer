@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, abort
 from database import DataBase  # Ensure this is accessible from this module
 from pymongo.errors import DuplicateKeyError
 from pymongo import ReturnDocument, errors
+from Logic.RadiusCalculator import RadiusCalculator
 
 # Initialize database connection
 dbase = DataBase()
@@ -192,3 +193,19 @@ def delete_user_from_community():
         return jsonify({"message": "User removed from community successfully"}), 200
     except errors.PyMongoError as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@community_bp.route('/communities/get_communities_by_radius_and_location', methods=['GET'])
+def get_communities_by_radius_and_location():
+    data = request.json
+
+    radius = data["radius"]
+    center_location = data["location"]
+
+    locations = []
+    index = 0
+    for community in communities:
+        locations.insert(index, community["location"])
+
+    local_communities = RadiusCalculator.locations_within_radius(center_location, radius, locations)
+    return jsonify({f"local communities :{local_communities} "}), 200
