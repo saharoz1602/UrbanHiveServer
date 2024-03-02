@@ -54,7 +54,7 @@ def add_user():
     user_data = request.get_json()
 
     # Check for required fields
-    required_fields = ["id", "name", "email", "password", "telephone", "location"]
+    required_fields = ["id", "name", "email", "password", "phoneNumber", "location"]
     if not all(field in user_data for field in required_fields):
         abort(400, description="Missing required field(s)")
 

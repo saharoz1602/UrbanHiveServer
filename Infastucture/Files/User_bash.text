@@ -8,7 +8,7 @@
           "name": "danor",
           "email": "danors@gmail.com",
           "password": "Ds0502660865",
-          "telephone": :"0501234567"
+          "phoneNumber":"0501234567",
           "location": {
             "latitude": 37.4219909,
             "longitude": -122.0839496
@@ -22,7 +22,7 @@
           "name": "sahar",
           "email": "sahar@gmail.com",
           "password": "123456789",
-          "telephone": "0509813056",
+          "phoneNumber": "0509813056",
           "location": {
             "latitude": 37.4679909,
             "longitude": -122.0845496
