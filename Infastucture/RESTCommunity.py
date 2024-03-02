@@ -20,6 +20,14 @@ def add_community():
     area = data.get('area')
     location = data.get('location')
 
+    find = communities.find_one({"area": area})  # validating there is no community called "area"
+    if find:
+        return jsonify({"error": "the community with this name is already exists±!!"}), 400
+
+    find = communities.find_one({"location": location})
+    if find:
+        return jsonify({"error": "the community with this location is already exists±!!"}), 400
+
     # Fetch manager's details
     manager = users.find_one({"id": manager_id}, {"_id": 0, "id": 1, "name": 1, "location": 1})
     if not manager:
@@ -28,7 +36,7 @@ def add_community():
     # Prepare community object
     community = {
         "area": area,
-        "location" : location,
+        "location": location,
         "rules": [],
         "communityMembers": [manager],  # Add manager to community members
         "communityManagers": [manager],  # Add manager as the community manager
@@ -69,7 +77,6 @@ def add_user_to_community():
         # Update sender's community request
         users.update_one({"id": sender_id}, {"$set": {"communityRequest": sender_update}})
 
-
         return jsonify({"message": "Community request updated for both users"}), 200
     except errors.PyMongoError as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
@@ -104,7 +111,6 @@ def respond_to_community_request():
 
             # Update both users' communities list
             users.update_one({"id": receiver_id}, {"$push": {"communities": area}})
-
 
             # Remove community request for both users
             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
