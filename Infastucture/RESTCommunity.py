@@ -61,10 +61,10 @@ def add_user_to_community():
 
     try:
         # Update receiver's community request
-        users.update_one({"id": receiver_id}, {"$set": {"communityRequest": receiver_update}})
+        users.update_one({"id": receiver_id}, {"$set": {"communityRequest": sender_update}})
 
         # Update sender's community request
-        users.update_one({"id": sender_id}, {"$set": {"communityRequest": sender_update}})
+        users.update_one({"id": sender_id}, {"$set": {"communityRequest": receiver_update}})
 
         return jsonify({"message": "Community request updated for both users"}), 200
     except errors.PyMongoError as e:

@@ -14,6 +14,7 @@ CORS(app)
 app.register_blueprint(user_bp)
 app.register_blueprint(community_bp)
 
+
 # Flask Server
 @app.route('/get_server_ip', methods=['GET'])
 def get_server_ip():
