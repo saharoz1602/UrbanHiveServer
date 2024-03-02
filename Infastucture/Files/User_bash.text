@@ -146,9 +146,34 @@ curl -X POST http://192.168.1.143:5000/communities/delete_user_from_community \
          }'
 
 
+———————————————————
 
+add event
 
+curl -X POST http://192.168.1.143:5000/events/add_event \
+-H "Content-Type: application/json" \
+-d '{
+    "initiator": "311156616",
+    "community_name": "Kerem Street",
+    "location": {"latitude": 37.4219909, "longitude": -122.0839496},
+    "event_name": "Neighborhood BBQ",
+    "event_type": "Social",
+    "start_time": "2024-04-15T12:00:00Z",
+    "end_time": "2024-04-15T16:00:00Z",
+    "guest_list": ["311285514"]
+}'
 
+———————————————————
+respond_to_event_request
+
+curl -X POST http://192.168.1.143:5000/events/respond_to_event_request \
+    -H "Content-Type: application/json" \
+    -d '{
+        "user_id": "311285514",
+        "community_name": "Kerem Street",
+        "event_name": "Neighborhood BBQ",
+        "response": true
+    }'
 
 
 
