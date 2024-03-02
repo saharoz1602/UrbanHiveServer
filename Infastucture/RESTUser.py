@@ -54,7 +54,7 @@ def add_user():
     user_data = request.get_json()
 
     # Check for required fields
-    required_fields = ["id", "name", "email", "password", "location"]
+    required_fields = ["id", "name", "email", "password", "telephone", "location"]
     if not all(field in user_data for field in required_fields):
         abort(400, description="Missing required field(s)")
 
@@ -287,60 +287,6 @@ def add_friend():
         return jsonify({"error": str(e)}), 500
 
 
-@user_bp.route('/user/respond-to-request', methods=['POST'])
-def respond_to_request():
-    data = request.get_json()
-
-    receiver_id = data.get('receiver_id')
-    sender_id = data.get('sender_id')
-    response = data.get('response')  # 1 for approve, 0 for decline
-
-    # Fetch both sender and receiver from the database
-    sender = users.find_one({"id": sender_id})
-
-    receiver = users.find_one({"id": receiver_id})
-
-    if not sender or not receiver:
-        return jsonify({"error": "Sender and receiver must exist"}), 404
-
-    # Check if the users are already friends or have pending friend requests
-    if any(friend['friend id'] == receiver_id for friend in sender.get('friends', [])) or \
-            any(friend['friend id'] == sender_id for friend in receiver.get('friends', [])) or \
-            any(request['id'] == receiver_id for request in sender.get('requests', [])) or \
-            any(request['id'] == sender_id for request in receiver.get('requests', [])):
-        return jsonify({"error": "Users already connected or have pending friend requests"}), 409
-
-    if response == 1:  # Approve
-        # Prepare friend information for both sender and receiver
-        sender_friend_info = {
-            "friend name": receiver["name"],
-            "friend id": receiver_id,
-            "friend location": receiver["location"]
-        }
-
-        receiver_friend_info = {
-            "friend name": sender["name"],
-            "friend id": sender_id,
-            "friend location": sender["location"]
-        }
-
-        # Add each user to the other's friends list and remove the request
-        users.update_one({"id": sender_id},
-                         {"$push": {"friends": sender_friend_info}, "$pull": {"requests": {"id": receiver_id}}})
-        users.update_one({"id": receiver_id},
-                         {"$push": {"friends": receiver_friend_info}, "$pull": {"requests": {"id": sender_id}}})
-
-    elif response == 0:  # Decline
-        # Just remove the friend request from both users
-        users.update_one({"id": sender_id}, {"$pull": {"requests": {"id": receiver_id}}})
-        users.update_one({"id": receiver_id}, {"$pull": {"requests": {"id": sender_id}}})
-
-    else:
-        return jsonify({"error": "Invalid response"}), 400
-
-    return jsonify({"message": "Response processed successfully"}), 200
-
-
 # @user_bp.route('/user/respond-to-request', methods=['POST'])
 # def respond_to_request():
 #     data = request.get_json()
@@ -351,10 +297,18 @@ def respond_to_request():
 #
 #     # Fetch both sender and receiver from the database
 #     sender = users.find_one({"id": sender_id})
+#
 #     receiver = users.find_one({"id": receiver_id})
 #
 #     if not sender or not receiver:
 #         return jsonify({"error": "Sender and receiver must exist"}), 404
+#
+#     # Check if the users are already friends or have pending friend requests
+#     if any(friend['friend id'] == receiver_id for friend in sender.get('friends', [])) or \
+#             any(friend['friend id'] == sender_id for friend in receiver.get('friends', [])) or \
+#             any(request['id'] == receiver_id for request in sender.get('requests', [])) or \
+#             any(request['id'] == sender_id for request in receiver.get('requests', [])):
+#         return jsonify({"error": "Users already connected or have pending friend requests"}), 409
 #
 #     if response == 1:  # Approve
 #         # Prepare friend information for both sender and receiver
@@ -385,6 +339,52 @@ def respond_to_request():
 #         return jsonify({"error": "Invalid response"}), 400
 #
 #     return jsonify({"message": "Response processed successfully"}), 200
+
+
+@user_bp.route('/user/respond-to-request', methods=['POST'])
+def respond_to_request():
+    data = request.get_json()
+
+    receiver_id = data.get('receiver_id')
+    sender_id = data.get('sender_id')
+    response = data.get('response')  # 1 for approve, 0 for decline
+
+    # Fetch both sender and receiver from the database
+    sender = users.find_one({"id": sender_id})
+    receiver = users.find_one({"id": receiver_id})
+
+    if not sender or not receiver:
+        return jsonify({"error": "Sender and receiver must exist"}), 404
+
+    if response == 1:  # Approve
+        # Prepare friend information for both sender and receiver
+        sender_friend_info = {
+            "friend name": receiver["name"],
+            "friend id": receiver_id,
+            "friend location": receiver["location"]
+        }
+
+        receiver_friend_info = {
+            "friend name": sender["name"],
+            "friend id": sender_id,
+            "friend location": sender["location"]
+        }
+
+        # Add each user to the other's friends list and remove the request
+        users.update_one({"id": sender_id},
+                         {"$push": {"friends": sender_friend_info}, "$pull": {"requests": {"id": receiver_id}}})
+        users.update_one({"id": receiver_id},
+                         {"$push": {"friends": receiver_friend_info}, "$pull": {"requests": {"id": sender_id}}})
+
+    elif response == 0:  # Decline
+        # Just remove the friend request from both users
+        users.update_one({"id": sender_id}, {"$pull": {"requests": {"id": receiver_id}}})
+        users.update_one({"id": receiver_id}, {"$pull": {"requests": {"id": sender_id}}})
+
+    else:
+        return jsonify({"error": "Invalid response"}), 400
+
+    return jsonify({"message": "Response processed successfully"}), 200
 
 
 @user_bp.route('/user/delete-friend', methods=['POST'])
