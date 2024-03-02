@@ -36,6 +36,7 @@ def add_community():
     }
 
     try:
+        users.update_one({"id": manager_id}, {"$push": {"communities": area}})
         result = communities.insert_one(community)
         return jsonify({"message": "Community added", "id": str(result.inserted_id)}), 201
     except DuplicateKeyError:
@@ -67,6 +68,7 @@ def add_user_to_community():
 
         # Update sender's community request
         users.update_one({"id": sender_id}, {"$set": {"communityRequest": sender_update}})
+
 
         return jsonify({"message": "Community request updated for both users"}), 200
     except errors.PyMongoError as e:
@@ -102,7 +104,7 @@ def respond_to_community_request():
 
             # Update both users' communities list
             users.update_one({"id": receiver_id}, {"$push": {"communities": area}})
-            users.update_one({"id": sender_id}, {"$push": {"communities": area}})
+
 
             # Remove community request for both users
             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
