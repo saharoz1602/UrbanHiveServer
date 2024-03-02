@@ -108,7 +108,11 @@ curl -X POST http://192.168.1.143:5000/communities/add_community \
      -H "Content-Type: application/json" \
      -d '{
           "manager_id": "311156616",
-          "area": "Kerem Street"
+          "area": "Kerem Street",
+          "location": {
+            "latitude": 37.4219909,
+            "longitude": -122.0839496
+          }
          }'
 
 ———————————————————
