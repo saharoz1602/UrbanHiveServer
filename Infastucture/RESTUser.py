@@ -275,8 +275,8 @@ def add_friend():
         return jsonify({"error": "Both users must exist"}), 404
 
     # Prepare the request objects for sender and receiver
-    sender_request = {"id": receiver_id, "status": "pending"}
-    receiver_request = {"id": sender_id, "status": "wait for response"}
+    sender_request = {"id": receiver_id, "name": receiver["name"], "status": "pending"}
+    receiver_request = {"id": sender_id, "name": sender["name"], "status": "wait for response"}
 
     # Update the sender and receiver 'requests' arrays
     try:
@@ -297,6 +297,7 @@ def respond_to_request():
 
     # Fetch both sender and receiver from the database
     sender = users.find_one({"id": sender_id})
+
     receiver = users.find_one({"id": receiver_id})
 
     if not sender or not receiver:
