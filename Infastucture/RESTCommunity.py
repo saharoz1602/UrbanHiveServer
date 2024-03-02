@@ -198,14 +198,17 @@ def delete_user_from_community():
 @community_bp.route('/communities/get_communities_by_radius_and_location', methods=['GET'])
 def get_communities_by_radius_and_location():
     data = request.json
-
+    rd = RadiusCalculator()
     radius = data["radius"]
     center_location = data["location"]
+    try:
+        locations = []
+        index = 0
+        for community in communities:
+            locations.insert(index, community["location"])
+            index = index + 1
 
-    locations = []
-    index = 0
-    for community in communities:
-        locations.insert(index, community["location"])
-
-    local_communities = RadiusCalculator.locations_within_radius(center_location, radius, locations)
-    return jsonify({f"local communities :{local_communities} "}), 200
+        local_communities = rd.locations_within_radius(center_location, radius, locations)
+        return jsonify({f"local communities :{local_communities} "}), 200
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
