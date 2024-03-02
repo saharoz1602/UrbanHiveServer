@@ -18,6 +18,7 @@ def add_community():
     data = request.json
     manager_id = data.get('manager_id')
     area = data.get('area')
+    location = data.get('location')
 
     # Fetch manager's details
     manager = users.find_one({"id": manager_id}, {"_id": 0, "id": 1, "name": 1, "location": 1})
@@ -27,6 +28,7 @@ def add_community():
     # Prepare community object
     community = {
         "area": area,
+        "location" : location,
         "rules": [],
         "communityMembers": [manager],  # Add manager to community members
         "communityManagers": [manager],  # Add manager as the community manager
