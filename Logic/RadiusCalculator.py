@@ -2,7 +2,7 @@ from math import radians, cos, sin, sqrt, atan2
 
 
 class RadiusCalculator():
-    def calculate_distance(lat1, lon1, lat2, lon2):
+    def calculate_distance(self,lat1, lon1, lat2, lon2):
         # Radius of the Earth in km
         R = 6371.0
 
@@ -24,7 +24,7 @@ class RadiusCalculator():
     def locations_within_radius(self, center_location, radius, locations):
         within_radius = []
         for location in locations:
-            distance = self.calculate_distance(center_location[0], center_location[1], location[0], location[1])
+            distance = self.calculate_distance(center_location[0], center_location[1], location["latitude"], location["longitude"])
             if distance <= radius:
                 within_radius.append(location)
         return within_radius

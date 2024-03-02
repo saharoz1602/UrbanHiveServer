@@ -195,20 +195,46 @@ def delete_user_from_community():
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
-@community_bp.route('/communities/get_communities_by_radius_and_location', methods=['GET'])
+communities = db['communities']
+
+
+@community_bp.route('/communities/get_communities_by_radius_and_location', methods=['POST'])
 def get_communities_by_radius_and_location():
     data = request.json
     rd = RadiusCalculator()
     radius = data["radius"]
-    center_location = data["location"]
+    location = data["location"]
+
+    center_location = [float(location["latitude"]), float(location["longitude"])]
+
     try:
+        count = communities.count_documents({})  # getting how many communities in the dn
+        copy_communities = []
+        for i in range(0, count):  # copy the data in to iterable list
+            com = communities.find_one_and_delete({})
+            copy_communities.insert(0, com)
+
         locations = []
         index = 0
-        for community in communities:
+        for community in copy_communities:  # extract the locations
             locations.insert(index, community["location"])
+            communities.insert_one(copy_communities[index])
+
+        for location in locations:  # cast the locations
+            location["latitude"] = float(location["latitude"])
+            location["longitude"] = float(location["longitude"])
+
+        # calculate the communities in the area
+        local_communities = rd.locations_within_radius(center_location, int(radius), locations)
+
+        communities_to_return = []
+        index = 0
+        # returning the communities by location from db
+        for community in local_communities:
+            community_to_add = communities.find_one({"location": community})
+            communities_to_return.insert(index, community_to_add)
             index = index + 1
 
-        local_communities = rd.locations_within_radius(center_location, radius, locations)
-        return jsonify({f"local communities :{local_communities} "}), 200
+        return jsonify({f"local communities :{communities_to_return} "}), 200
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500

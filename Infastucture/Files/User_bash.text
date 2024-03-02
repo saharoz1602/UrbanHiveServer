@@ -184,9 +184,15 @@ curl -X POST http://192.168.1.143:5000/events/respond_to_event_request \
 ———————————————————
 get_communities_by_radius_and_location
 
-curl -X GET http://192.168.1.143:5000/communities/get_communities_by_radius_and_location \
+curl -X POST http://192.168.1.143:5000/communities/get_communities_by_radius_and_location \
      -H "Content-Type: application/json" \
-     -d '{"radius": "your_radius_value", "location": "your_center_location_value"}'
+     -d '{
+      "radius": "2",
+      "location": {
+            "latitude": 37.4219909,
+            "longitude": -122.0839496
+          }
+     }'
 
 
 
