@@ -63,6 +63,7 @@ class RadiusCalculator:
 
         return within_radius
 
+
 def main():
     # Instance of the RadiusCalculator class.
     calculator = RadiusCalculator()
@@ -85,7 +86,8 @@ def main():
     print("Locations within 50 kilometers of London:")
     for location in within_radius:
         print(location["name"])
-        print(location["latitude"],location["longitude"])
+        print(location["latitude"], location["longitude"])
+
 
 if __name__ == "__main__":
     main()

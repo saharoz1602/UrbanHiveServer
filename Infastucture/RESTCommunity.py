@@ -195,9 +195,6 @@ def delete_user_from_community():
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
-communities = db['communities']
-
-
 @community_bp.route('/communities/get_communities_by_radius_and_location', methods=['POST'])
 def get_communities_by_radius_and_location():
     data = request.json
