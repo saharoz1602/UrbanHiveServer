@@ -85,6 +85,14 @@ def add_event():
     return jsonify({'message': 'Event created and invitations sent!', 'event_id': str(event_id)}), 201
 
 
+@events_bp.route('/events/get_all_events', methods=['GET'])
+def get_all_events():
+    all_events = events.find({})  # Retrieve all documents from the events collection
+    # Convert the events to a list of dicts, excluding the '_id' field to make them JSON serializable
+    events_list = [{key: value for key, value in event.items() if key != '_id'} for event in all_events]
+    return jsonify(events_list), 200
+
+
 @events_bp.route('/events/respond_to_event_request', methods=['POST'])
 def respond_to_event_request():
     # Parse the incoming JSON data
