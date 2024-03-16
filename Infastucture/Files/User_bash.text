@@ -197,7 +197,37 @@ curl -X POST http://192.168.1.143:5000/communities/get_communities_by_radius_and
 
 ———————————————————
 
+get community details by area name
+
 curl -X POST "http://192.168.1.143:5000/communities/details_by_area?area=Kerem%20Street" -H "Content-Type: application/json"
+
+
+
+———————————————————
+create post
+
+curl -X POST http://192.168.1.143:5000/posting/add_post \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "311156616",
+    "community_area": "Kerem Street",
+    "post_content": {
+        "header": "Exciting Community Update!",
+        "body": "We have a new community garden project starting next week. Everyone is welcome to join!"
+    },
+    "post_date": "2024-03-16T12:00:00Z"
+}'
+
+
+
+———————————————————
+delete post
+
+curl -X DELETE http://192.168.1.143:5000/posting/delete_post \
+-H "Content-Type: application/json" \
+-d '{
+    "post_id": "post-id-here"
+}'
 
 
 

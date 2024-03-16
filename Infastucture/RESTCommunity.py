@@ -10,7 +10,7 @@ db = dbase.db
 communities = db['communities']
 users = db['users']  # Assuming users collection is also accessible
 
-# Create a Flask Blueprint for the community routes
+# Create a Flask Blueprint for t the community routes
 community_bp = Blueprint('community', __name__)
 
 
