@@ -129,7 +129,7 @@ def add_comment_to_post():
         "user_name": user_name
     }
 
-    # First, update the post in the 'posting' collection with the new comment
+    # Update the post in the 'posting' collection with the new comment
     post_update_result = posting.update_one(
         {"post_id": post_id},
         {"$push": {"comments": comment}}
@@ -139,7 +139,7 @@ def add_comment_to_post():
         # If the post is not found in 'posting' collection, return an error
         return jsonify({"error": "Post not found in postings"}), 404
 
-    # Next, update the corresponding post in the community document's posts array
+    # Update the corresponding post in the community document's posts array
     community_update_result = communities.update_one(
         {"posts.post_id": post_id},
         {"$push": {"posts.$.comments": comment}}
