@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, abort
 from database import DataBase  # Ensure this is accessible from this module
 from pymongo.errors import DuplicateKeyError
+import uuid
 
 # Initialize database connection
 dbase = DataBase()
@@ -27,8 +28,11 @@ def add_event():
     end_time = data['end_time']
     guest_list = data['guest_list']
 
+    event_id = str(uuid.uuid4())
+
     # Create a new event document
     event_doc = {
+        'event_id' : event_id,
         'initiator': event_initiator_id,
         'community_name': community_name,
         'location': event_location,
@@ -140,4 +144,37 @@ def respond_to_event_request():
         )
 
     return jsonify({"message": "Event response recorded and request removed"}), 200
+
+@events_bp.route('/events/delete_event', methods=['POST'])
+def delete_event():
+    data = request.json
+    event_id_to_delete = data['event_id']
+
+    # Check if the event exists in the 'events' collection
+    if not events.find_one({'event_id': event_id_to_delete}):
+        return jsonify({'error': 'Event not found'}), 404
+
+    # Delete the event from the 'events' collection
+    events.delete_one({'event_id': event_id_to_delete})
+
+    # Remove the event from the 'communities' documents
+    communities.update_many(
+        {},
+        {'$pull': {'events': {'event_id': event_id_to_delete}}}
+    )
+
+    # Remove the event from the 'users' documents
+    users.update_many(
+        {},
+        {'$pull': {'events': {'event_id': event_id_to_delete}}}
+    )
+
+    # Optionally, remove any requests associated with this event from users' documents
+    users.update_many(
+        {},
+        {'$pull': {'requests': {'event_id': event_id_to_delete}}}
+    )
+
+    return jsonify({'message': 'Event deleted successfully!'}), 200
+
 
