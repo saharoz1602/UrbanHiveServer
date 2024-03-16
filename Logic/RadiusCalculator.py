@@ -63,31 +63,31 @@ class RadiusCalculator:
 
         return within_radius
 
-
-def main():
-    # Instance of the RadiusCalculator class.
-    calculator = RadiusCalculator()
-
-    # Example coordinates for distance calculation.
-    lat1, lon1 = 40.7128, -74.0060  # New York City
-    lat2, lon2 = 34.0522, -118.2437  # Los Angeles
-    distance = calculator.calculate_distance(lat1, lon1, lat2, lon2)
-    print(f"Distance between New York City and Los Angeles: {distance:.2f} kilometers")
-
-    # Example for finding locations within a specified radius.
-    center_location = (51.5074, -0.1278)  # London
-    radius = 200  # 50 kilometers radius
-    locations = [
-        {"name": "London", "latitude": 51.5074, "longitude": -0.1278},
-        {"name": "Cambridge", "latitude": 52.2053, "longitude": 0.1218},
-        {"name": "Brighton", "latitude": 50.8225, "longitude": -0.1372},
-    ]
-    within_radius = calculator.locations_within_radius(center_location, radius, locations)
-    print("Locations within 50 kilometers of London:")
-    for location in within_radius:
-        print(location["name"])
-        print(location["latitude"], location["longitude"])
-
-
-if __name__ == "__main__":
-    main()
+#
+# def main():
+#     # Instance of the RadiusCalculator class.
+#     calculator = RadiusCalculator()
+#
+#     # Example coordinates for distance calculation.
+#     lat1, lon1 = 40.7128, -74.0060  # New York City
+#     lat2, lon2 = 34.0522, -118.2437  # Los Angeles
+#     distance = calculator.calculate_distance(lat1, lon1, lat2, lon2)
+#     print(f"Distance between New York City and Los Angeles: {distance:.2f} kilometers")
+#
+#     # Example for finding locations within a specified radius.
+#     center_location = (51.5074, -0.1278)  # London
+#     radius = 200  # 50 kilometers radius
+#     locations = [
+#         {"name": "London", "latitude": 51.5074, "longitude": -0.1278},
+#         {"name": "Cambridge", "latitude": 52.2053, "longitude": 0.1218},
+#         {"name": "Brighton", "latitude": 50.8225, "longitude": -0.1372},
+#     ]
+#     within_radius = calculator.locations_within_radius(center_location, radius, locations)
+#     print("Locations within 50 kilometers of London:")
+#     for location in within_radius:
+#         print(location["name"])
+#         print(location["latitude"], location["longitude"])
+#
+#
+# if __name__ == "__main__":
+#     main()

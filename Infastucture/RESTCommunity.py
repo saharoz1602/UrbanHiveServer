@@ -235,3 +235,23 @@ def get_communities_by_radius_and_location():
         return jsonify({f"local communities :{communities_to_return} "}), 200
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@community_bp.route('/communities/details_by_area', methods=['POST'])
+def get_community_details_by_area_name():
+    # Extract area name from query parameter
+    area = request.args.get('area')
+
+    if not area:
+        return jsonify({"error": "Area name is required"}), 400
+
+    # Find the community by its area name
+    community = communities.find_one({"area": area}, {"_id": 0})  # Excluding MongoDB's _id from the response
+
+    if not community:
+        return jsonify({"error": "Community not found"}), 404
+
+    # Return the found community details
+    return jsonify(community), 200
+
+

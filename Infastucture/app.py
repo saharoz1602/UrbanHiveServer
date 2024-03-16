@@ -4,6 +4,7 @@ import socket
 from RESTUser import user_bp  # Import the Blueprint from user.py
 from RESTCommunity import community_bp
 from RESTEvents import events_bp
+#from RESTPosting import posting_bp
 
 host_name = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
@@ -15,6 +16,7 @@ CORS(app)
 app.register_blueprint(user_bp)
 app.register_blueprint(community_bp)
 app.register_blueprint(events_bp)
+#app.register_blueprint(events_bp)
 
 
 # Flask Server

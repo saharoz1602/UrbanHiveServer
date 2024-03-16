@@ -195,4 +195,10 @@ curl -X POST http://192.168.1.143:5000/communities/get_communities_by_radius_and
      }'
 
 
+———————————————————
+
+curl -X POST "http://192.168.1.143:5000/communities/details_by_area?area=Kerem%20Street" -H "Content-Type: application/json"
+
+
+
 
