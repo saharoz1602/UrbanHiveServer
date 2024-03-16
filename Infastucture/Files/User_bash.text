@@ -230,5 +230,30 @@ curl -X DELETE http://192.168.1.143:5000/posting/delete_post \
 }'
 
 
+———————————————————
+
+add comment to post
+
+curl -X POST http://192.168.1.143:5000/posting/add_comment_to_post \
+-H "Content-Type: application/json" \
+-d '{
+    "post_id": "70c9e2ea-06df-4a68-8a6e-270ea408378b",
+    "comment_text": "This is an insightful post!",
+    "user_id": "311156616",
+    "user_name": "danor"
+}'
+
+
+———————————————————
+
+delete comment from post
+
+curl -X DELETE http://192.168.1.143:5000/posting/delete_comment_from_post \
+-H "Content-Type: application/json" \
+-d '{
+    "post_id": "70c9e2ea-06df-4a68-8a6e-270ea408378b",
+    "comment_id": "775f88cb-7035-4818-9152-da8574b391ba"
+}'
+
 
 

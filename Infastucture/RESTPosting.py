@@ -103,3 +103,94 @@ def delete_post():
     return jsonify({"message": "Post deleted successfully"}), 200
 
 
+@posting_bp.route('/posting/add_comment_to_post', methods=['POST'])
+def add_comment_to_post():
+    # Parse the JSON data from the request
+    data = request.get_json()
+
+    # Extract required fields
+    post_id = data.get('post_id')
+    comment_text = data.get('comment_text')  # Text of the comment
+    user_id = data.get('user_id')
+    user_name = data.get('user_name')
+
+    if not all([post_id, comment_text, user_id, user_name]):
+        # If any required field is missing, return an error
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Generate a unique comment_id
+    comment_id = str(uuid.uuid4())
+
+    # Create the comment object
+    comment = {
+        "comment_id": comment_id,
+        "text": comment_text,
+        "user_id": user_id,
+        "user_name": user_name
+    }
+
+    # First, update the post in the 'posting' collection with the new comment
+    post_update_result = posting.update_one(
+        {"post_id": post_id},
+        {"$push": {"comments": comment}}
+    )
+
+    if post_update_result.matched_count == 0:
+        # If the post is not found in 'posting' collection, return an error
+        return jsonify({"error": "Post not found in postings"}), 404
+
+    # Next, update the corresponding post in the community document's posts array
+    community_update_result = communities.update_one(
+        {"posts.post_id": post_id},
+        {"$push": {"posts.$.comments": comment}}
+    )
+
+    if community_update_result.matched_count == 0:
+        # If the post is not found in any community, return a different message
+        return jsonify({"warning": "Post updated in postings but not found in any community"}), 200
+
+    return jsonify({"message": "Comment added successfully", "comment_id": comment_id}), 201
+
+
+@posting_bp.route('/posting/delete_comment_from_post', methods=['DELETE'])
+def delete_comment_from_post():
+    # Parse the JSON data from the request
+    data = request.get_json()
+
+    # Extract the post_id and comment_id
+    post_id = data.get('post_id')
+    comment_id = data.get('comment_id')
+
+    if not post_id or not comment_id:
+        # If post_id or comment_id is missing, return an error
+        return jsonify({"error": "Missing post_id or comment_id"}), 400
+
+    # Remove the comment from the 'posting' collection
+    post_update_result = posting.update_one(
+        {"post_id": post_id},
+        {"$pull": {"comments": {"comment_id": comment_id}}}
+    )
+
+    if post_update_result.matched_count == 0:
+        # If the post is not found, return an error
+        return jsonify({"error": "Post not found"}), 404
+    elif post_update_result.modified_count == 0:
+        # If the comment is not found, return an error
+        return jsonify({"error": "Comment not found or already deleted"}), 404
+
+    # Remove the comment from the corresponding community document's post
+    community_update_result = communities.update_one(
+        {"posts.post_id": post_id},
+        {"$pull": {"posts.$.comments": {"comment_id": comment_id}}}
+    )
+
+    if community_update_result.matched_count == 0:
+        # If the post is not found in the community, return a message indicating it
+        return jsonify({"warning": "Post found in postings but not in any community"}), 200
+    elif community_update_result.modified_count == 0:
+        # If the comment is not found in the community, return a message indicating it
+        return jsonify({"warning": "Comment not found or already deleted from community"}), 200
+
+    return jsonify({"message": "Comment deleted successfully"}), 200
+
+
