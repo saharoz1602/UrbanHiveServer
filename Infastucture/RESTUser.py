@@ -1,11 +1,14 @@
 from flask import Blueprint, jsonify, request, abort
 from database import DataBase
 from pymongo import ReturnDocument, errors
+from Logic.app_logger import setup_logger
 
 # Initialize database connection
 dbase = DataBase()
 db = dbase.db
 users = db['users']
+
+user_logger = setup_logger('user_logger', 'user.log')
 
 # Create a Flask Blueprint for the user routes
 user_bp = Blueprint('user', __name__)
@@ -21,9 +24,11 @@ def get_users():
         for user in users_list:
             user['_id'] = str(user['_id'])
 
+        user_logger.info(f"Users fetched successfully, users : {users_list}, status code is 200")
         return jsonify({"message": "Users fetched successfully", "users": users_list}), 200
     except Exception as e:
         # Handle exceptions
+        user_logger.error(f"error {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -73,6 +78,7 @@ def add_user():
 
     # Check if a user with the same ID or email already exists
     if users.find_one({"$or": [{"id": user_data["id"]}, {"email": user_data["email"]}]}):
+        user_logger.error(f"User with this ID or email already exists, status code is 409")
         return jsonify({"message": "User with this ID or email already exists"}), 409
 
     try:
@@ -81,8 +87,10 @@ def add_user():
         # Convert ObjectId to string and return the user data (without password for security)
         user_data.pop("password", None)  # Remove password from response for security
         user_data["_id"] = str(inserted.inserted_id)
+        user_logger.info(f"User added successfully, status code is 201")
         return jsonify({"message": "User added successfully", "user": user_data}), 201
     except errors.DuplicateKeyError as e:
+        user_logger.error(f"User with this data or email already exists, status code is 409")
         return jsonify({"error": "User with this data already exists", "detail": str(e)}), 409
 
 
@@ -103,6 +111,7 @@ def get_user_by_id(user_id):
     # Exclude sensitive data like password from the response
     user.pop('password', None)
 
+    user_logger.info(f"user : {user}, status code is 200")
     return jsonify(user), 200
 
 
@@ -158,6 +167,7 @@ def delete_user(user_id):
     users.delete_one({"id": user_id})
 
     # Return a success message
+    user_logger.info(f"User deleted successfully, status code is 200")
     return jsonify({"message": "User deleted successfully"}), 200
 
 

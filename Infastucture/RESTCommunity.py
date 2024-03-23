@@ -6,12 +6,15 @@ from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from pymongo import errors
 from Logic.RadiusCalculator import RadiusCalculator
+from Logic.app_logger import setup_logger
 
 # Initialize database connection
 dbase = DataBase()
 db = dbase.db
 communities = db['communities']
 users = db['users']  # Assuming users collection is also accessible
+
+community_logger = setup_logger('community_logger', 'community.log')
 
 # Create a Flask Blueprint for t the community routes
 community_bp = Blueprint('community', __name__)
@@ -26,15 +29,18 @@ def add_community():
 
     find = communities.find_one({"area": area})  # validating there is no community called "area"
     if find:
+        community_logger.error("error: the community with this name is already exists±!! status code = 400")
         return jsonify({"error": "the community with this name is already exists±!!"}), 400
 
     find = communities.find_one({"location": location})
     if find:
+        community_logger.error("error: the community with this location is already exists±!! status code = 400")
         return jsonify({"error": "the community with this location is already exists±!!"}), 400
 
     # Fetch manager's details
     manager = users.find_one({"id": manager_id}, {"_id": 0, "id": 1, "name": 1, "location": 1})
     if not manager:
+        community_logger.error("error: Manager not found, status code = 404")
         return jsonify({"error": "Manager not found"}), 404
 
     community_id = str(uuid.uuid4())
@@ -53,10 +59,13 @@ def add_community():
     try:
         users.update_one({"id": manager_id}, {"$push": {"communities": area}})
         result = communities.insert_one(community)
+        community_logger.info(f"Community added id = {str(result.inserted_id)} status code = 201" )
         return jsonify({"message": "Community added", "id": str(result.inserted_id)}), 201
     except DuplicateKeyError:
+        community_logger.error(f"Community already exists, status code = 400")
         return jsonify({"error": "Community already exists"}), 400
     except errors.PyMongoError as e:
+        community_logger.error(f"Database error, details is {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -83,9 +92,10 @@ def add_user_to_community():
 
         # Update sender's community request
         users.update_one({"id": sender_id}, {"$set": {"communityRequest": sender_update}})
-
+        community_logger.info("Community request updated for both users, status code = 200")
         return jsonify({"message": "Community request updated for both users"}), 200
     except errors.PyMongoError as e:
+        community_logger.error(f"Database error, details is {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -103,6 +113,7 @@ def respond_to_community_request():
             # Retrieve receiver's name and location
             receiver_user = users.find_one({"id": receiver_id}, {"name": 1, "location": 1})
             if not receiver_user:
+                community_logger.error(f"Database error, Receiver user not found, status code is 404")
                 return jsonify({"error": "Receiver user not found"}), 404
 
             receiver_name = receiver_user.get('name')
@@ -122,10 +133,11 @@ def respond_to_community_request():
             # Remove community request for both users
             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
             users.update_one({"id": sender_id}, {"$unset": {"communityRequest": ""}})
-
+            community_logger.info(f"Community request confirmed, users updated, and location added to community, status code is 200")
             return jsonify(
                 {"message": "Community request confirmed, users updated, and location added to community"}), 200
         except errors.PyMongoError as e:
+            community_logger.error(f"Database error, details is {str(e)}, status code is 500")
             return jsonify({"error": "Database error", "details": str(e)}), 500
     elif response == 0:
         # Declining the community request
@@ -133,9 +145,10 @@ def respond_to_community_request():
             # Remove community request for both users
             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
             users.update_one({"id": sender_id}, {"$unset": {"communityRequest": ""}})
-
+            community_logger.info(f"Community request declined and removed, status code is 200")
             return jsonify({"message": "Community request declined and removed"}), 200
         except errors.PyMongoError as e:
+            community_logger.error(f"Database error, details is {str(e)}, status code is 500")
             return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -195,9 +208,10 @@ def delete_user_from_community():
 
         # Remove community from user's list of communities
         users.update_one({"id": user_to_delete_id}, {"$pull": {"communities": area}})
-
+        community_logger.info(f"User removed from community successfully, status code is 200")
         return jsonify({"message": "User removed from community successfully"}), 200
     except errors.PyMongoError as e:
+        community_logger.error(f"Database error, details is {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -237,8 +251,10 @@ def get_communities_by_radius_and_location():
                 community_to_add['_id'] = str(community_to_add['_id'])  # Convert ObjectId to string
                 communities_to_return.append(community_to_add)
 
+        community_logger.info(f"local_communities : {communities_to_return}, status code is 200")
         return jsonify({"local_communities": communities_to_return}), 200
     except Exception as e:
+        community_logger.error(f"Database error, details is {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -248,15 +264,18 @@ def get_community_details_by_area_name():
     area = request.args.get('area')
 
     if not area:
+        community_logger.error(f"error, Area name is required, status code is 400")
         return jsonify({"error": "Area name is required"}), 400
 
     # Find the community by its area name
     community = communities.find_one({"area": area}, {"_id": 0})  # Excluding MongoDB's _id from the response
 
     if not community:
+        community_logger.error(f"error, ACommunity not found status code is 404")
         return jsonify({"error": "Community not found"}), 404
 
     # Return the found community details
+    community_logger.info(f"community ={community} , status code is 200")
     return jsonify(community), 200
 
 
@@ -274,8 +293,10 @@ def get_communities():
             communities_list.append(community)
 
         # Return the list of communities as JSON
+        community_logger.info(f"community list = {communities_list}")
         return jsonify({"communities": communities_list}), 200
     except errors.PyMongoError as e:
+        community_logger.error(f"Database error: details: {str(e)} , status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -289,11 +310,13 @@ def request_to_join_community():
     # Validate sender_id
     sender = users.find_one({"id": sender_id})
     if not sender:
+        community_logger.error(f" error: Invalid sender ID , status code is 404")
         return jsonify({"error": "Invalid sender ID"}), 404
 
     # Check if the community exists
     community = communities.find_one({"area": area})
     if not community:
+        community_logger.error(f" error: Community does not exist , status code is 404")
         return jsonify({"error": "Community does not exist"}), 404
 
     # Generate a unique request ID
@@ -319,6 +342,7 @@ def request_to_join_community():
     # Update the community document with the join request
     communities.update_one({"area": area}, {"$set": {"join_request": join_request}})
 
+    community_logger.info(f" Join request sent successfully, request id is {request_id} , status code is 200")
     return jsonify({"message": "Join request sent successfully", "request_id": request_id}), 200
 
 
@@ -331,6 +355,7 @@ def respond_to_community_join_request():
     # Validate request_id by checking if any community has this join request
     community = communities.find_one({"join_request.request_id": request_id})
     if not community:
+        community_logger.error("Invalid request ID, status code is 404")
         return jsonify({"error": "Invalid request ID"}), 404
 
     # Get the area name from the community found
@@ -341,6 +366,7 @@ def respond_to_community_join_request():
     # Retrieve the sender's user document
     sender_user = users.find_one({"id": sender_id})
     if not sender_user:
+        community_logger.error("errpr: Sender user not found, status code is 404")
         return jsonify({"error": "Sender user not found"}), 404
 
     # If response is 1, add the user to the community members and user's communities array
@@ -360,7 +386,7 @@ def respond_to_community_join_request():
         "status": "pending"
     }
     users.update_one({"id": sender_id}, {"$pull": {"requests": user_join_request}})
-
+    community_logger.info(f" JResponse processed successfully , status code is 200")
     return jsonify({"message": "Response processed successfully"}), 200
 
 

@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.NightWatchPositionsCalculator import NightWatchPositionsCalculator
+from Logic.app_logger import setup_logger
 import uuid
 
 # Initialize database connection
@@ -12,6 +13,8 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 night_watch = db['night_watch']
+
+night_watch_logger = setup_logger('night_watch_logger', 'night_watch.log')
 
 # Create a Flask Blueprint for the posting routes
 night_watch_bp = Blueprint('night_watch', __name__)
@@ -30,23 +33,27 @@ def add_new_night_watch():
 
     if not all([initiator_id, community_area, watch_date, watch_radius, positions_amount]):
         # If any of the required fields are missing, return an error
+        night_watch_logger.error(f"Error: Missing required fields, status code is 404")
         return jsonify({"error": "Missing required fields"}), 400
 
     # Validate that there isn't already a night watch with the same area and date
     existing_watch = night_watch.find_one({"community_area": community_area, "watch_date": watch_date})
     if existing_watch:
+        night_watch_logger.error(f"Error: A night watch is already scheduled for this community area and date, status code is 409")
         return jsonify({"error": "A night watch is already scheduled for this community area and date"}), 409
 
     # Check if the initiator is a member of the community
     community = communities.find_one({"area": community_area, "communityMembers.id": initiator_id})
     if not community:
         # If the community does not exist or the user is not a member, return an error
+        night_watch_logger.error(f"Error: Initiator is not a member of the community status code is 404")
         return jsonify({"error": "Initiator is not a member of the community"}), 404
 
     # Get user details from the database
     initiator = users.find_one({"id": initiator_id}, {"_id": 0, "id": 1, "name": 1})
     if not initiator:
         # If the user does not exist in the database, return an error
+        night_watch_logger.error(f"Error: Initiator not found, status code is 404")
         return jsonify({"error": "Initiator not found"}), 404
 
     # Generate a unique watch_id
@@ -77,12 +84,15 @@ def add_new_night_watch():
             {"area": community_area},
             {"$push": {"night_watches": community_night_watch_entry}}
         )
+        night_watch_logger.info(f"Night watch added successfully, watch id : {watch_id}, status code is 200")
         return jsonify({"message": "Night watch added successfully", "watch_id": watch_id}), 200
 
     except DuplicateKeyError:
+        night_watch_logger.error(f"Night watch with this ID already exists, status code is 409")
         return jsonify({"error": "Night watch with this ID already exists"}), 409
     except Exception as e:
         # For any other exception, return a database error
+        night_watch_logger.error(f"Database error : details {str(e)}")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -96,20 +106,24 @@ def join_night_watch():
 
     if not all([candidate_id, night_watch_id]):
         # If any of the required fields are missing, return an error
+        night_watch_logger.error(f"Missing required fields, status code is 400")
         return jsonify({"error": "Missing required fields"}), 400
 
     # Check if the candidate exists
     candidate = users.find_one({"id": candidate_id})
     if not candidate:
+        night_watch_logger.error(f"Candidate not found, status code is 404")
         return jsonify({"error": "Candidate not found"}), 404
 
     # Find the night watch entry
     watch = night_watch.find_one({"watch_id": night_watch_id})
     if not watch:
+        night_watch_logger.error(f"Night watch not found, status code is 404")
         return jsonify({"error": "Night watch not found"}), 404
 
     # Check if there is space available in the watch
     if len(watch['watch_members']) >= int(watch['positions_amount']):
+        night_watch_logger.error(f"No positions available in this night watch, status code is 409")
         return jsonify({"error": "No positions available in this night watch"}), 409
 
     # Add candidate to the night watch
@@ -129,10 +143,11 @@ def join_night_watch():
             {"id": candidate_id},
             {"$push": {"night_watches": watch_entry_for_user}}
         )
-
+        night_watch_logger.info(f"Candidate successfully joined night watch, status code is 200")
         return jsonify({"message": "Candidate successfully joined night watch"}), 200
 
     except Exception as e:
+        night_watch_logger.error(f"Database error: details : {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
@@ -142,11 +157,13 @@ def close_night_watch():
     watch_id = data.get('watch_id')
 
     if not watch_id:
+        night_watch_logger.error("Missing watch_id field, status code is 400")
         return jsonify({"error": "Missing watch_id field"}), 400
 
     # Find the night watch entry to get the details before deletion
     watch = night_watch.find_one({"watch_id": watch_id})
     if not watch:
+        night_watch_logger.error("Night watch not found, status code is 404")
         return jsonify({"error": "Night watch not found"}), 404
 
     # Store community_area and watch_date to remove from the community document
@@ -167,7 +184,7 @@ def close_night_watch():
         {"area": community_area},
         {"$pull": {"night_watches": {"watch_id": watch_id}}}
     )
-
+    night_watch_logger.info("Night watch closed successfully, status code is 200")
     return jsonify({"message": "Night watch closed successfully"}), 200
 
 
@@ -177,11 +194,13 @@ def calculate_position_for_watch():
     watch_id = data.get('watch_id')
 
     if not watch_id:
+        night_watch_logger.error("Missing watch_id field, status code is 400")
         return jsonify({"error": "Missing watch_id field"}), 400
 
     # Find the night watch entry
     watch = night_watch.find_one({"watch_id": watch_id})
     if not watch:
+        night_watch_logger.error("Night watch not found, status code is 404")
         return jsonify({"error": "Night watch not found"}), 404
 
     position_amount = int(watch['positions_amount'])
@@ -215,9 +234,11 @@ def calculate_position_for_watch():
                               "the watch")
             night_watch.update_one({"watch_id": watch_id}, {"$set": {"urgent_message": urgent_message}})
 
+        night_watch_logger.info(f"Positions calculated and members assigned, inlays is {inlays}, status code is 200 ")
         return jsonify({"message": "Positions calculated and members assigned", "inlays": inlays}), 200
 
     except Exception as e:
         # For any exception, return a database error
+        night_watch_logger.error(f"Database error: details : {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
 

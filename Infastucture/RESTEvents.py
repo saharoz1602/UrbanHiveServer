@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, abort
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
+from Logic.app_logger import setup_logger
 import uuid
 
 # Initialize database connection
@@ -9,6 +10,8 @@ db = dbase.db
 communities = db['communities']
 users = db['users']
 events = db['events']
+
+events_logger = setup_logger('events_logger', 'events.log')
 
 # Create a Flask Blueprint for the event routes
 events_bp = Blueprint('events', __name__)
@@ -85,7 +88,7 @@ def add_event():
             )
         except Exception as e:
             abort(400, str(e))
-
+    events_logger.info(f"Event created and invitations sent!, event id = {str(event_id)}")
     return jsonify({'message': 'Event created and invitations sent!', 'event_id': str(event_id)}), 201
 
 
@@ -94,6 +97,7 @@ def get_all_events():
     all_events = events.find({})  # Retrieve all documents from the events collection
     # Convert the events to a list of dicts, excluding the '_id' field to make them JSON serializable
     events_list = [{key: value for key, value in event.items() if key != '_id'} for event in all_events]
+    events_logger.info(f"Events list : {events_list}")
     return jsonify(events_list), 200
 
 
@@ -111,12 +115,14 @@ def respond_to_event_request():
     # Fetch the user from the users collection
     user = users.find_one({"id": user_id})
     if not user:
+        events_logger.error("error : user not found, status code = 404")
         return jsonify({"error": "User not found"}), 404
 
     # Find the request object that the user is responding to
     event_request = next((req for req in user['requests'] if
                           req['event_request'] == event_name and req['community_name'] == community_name), None)
     if not event_request:
+        events_logger.error("error : Event request not found, status code = 404")
         return jsonify({"error": "Event request not found"}), 404
 
     # Remove the event request from the user's document
@@ -142,7 +148,7 @@ def respond_to_event_request():
             {"id": user_id},
             {"$push": {"events": event_request}}
         )
-
+    events_logger.info("Event response recorded and request removed, status code = 200")
     return jsonify({"message": "Event response recorded and request removed"}), 200
 
 
@@ -153,6 +159,7 @@ def delete_event():
 
     # Check if the event exists in the 'events' collection
     if not events.find_one({'event_id': event_id_to_delete}):
+        events_logger.error("Error: Event not found, status code = 404")
         return jsonify({'error': 'Event not found'}), 404
 
     # Delete the event from the 'events' collection
@@ -175,5 +182,5 @@ def delete_event():
         {},
         {'$pull': {'requests': {'event_id': event_id_to_delete}}}
     )
-
+    events_logger.info("Event deleted successfully!, status code = 200")
     return jsonify({'message': 'Event deleted successfully!'}), 200
