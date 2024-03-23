@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
+from Logic.NightWatchPositionsCalculator import NightWatchPositionsCalculator
 import uuid
 
 # Initialize database connection
@@ -168,3 +169,55 @@ def close_night_watch():
     )
 
     return jsonify({"message": "Night watch closed successfully"}), 200
+
+
+@night_watch_bp.route('/night_watch/calculate_position_for_watch', methods=['POST'])
+def calculate_position_for_watch():
+    data = request.get_json()
+    watch_id = data.get('watch_id')
+
+    if not watch_id:
+        return jsonify({"error": "Missing watch_id field"}), 400
+
+    # Find the night watch entry
+    watch = night_watch.find_one({"watch_id": watch_id})
+    if not watch:
+        return jsonify({"error": "Night watch not found"}), 404
+
+    position_amount = int(watch['positions_amount'])
+    members = watch['watch_members']
+    community_area = watch['community_area']
+    community = communities.find_one({"area": community_area})
+    location = community['location']
+    radius = float(watch["watch_radius"])
+
+    position_calculator = NightWatchPositionsCalculator(location)
+
+    # Generate positions
+    positions = position_calculator.generate_circle_positions(radius, len(members))
+
+    # Assign members to positions
+    inlays = position_calculator.assign_member_to_position(positions, members)
+
+    try:
+        # Update the night_watch document with inlays
+        night_watch.update_one(
+            {"watch_id": watch_id},
+            {
+                "$set": {
+                    "position_inlays": inlays
+                }
+            }
+        )
+
+        if len(members) < position_amount:
+            urgent_message = ("The number of volunteers in the watch is less than the number of positions assigned to "
+                              "the watch")
+            night_watch.update_one({"watch_id": watch_id}, {"$set": {"urgent_message": urgent_message}})
+
+        return jsonify({"message": "Positions calculated and members assigned", "inlays": inlays}), 200
+
+    except Exception as e:
+        # For any exception, return a database error
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+

@@ -314,7 +314,7 @@ curl -X POST http://192.168.1.143:5000/night_watch/join_watch \
 -H "Content-Type: application/json" \
 -d '{
     "candidate_id": "311285514",
-    "night_watch_id": "58e915bf-e0b4-47d7-92f2-982b424be3f1"
+    "night_watch_id": "a7fe555c-3873-4acb-998a-93676a8ad1a2"
 }'
 
 
@@ -325,3 +325,12 @@ close night watch
 curl -X POST http://192.168.1.143:5000/night_watch/close_night_watch \
 -H "Content-Type: application/json" \
 -d '{"watch_id": "58e915bf-e0b4-47d7-92f2-982b424be3f1"}'
+
+
+———————————————————
+calculate_position_for_watch
+
+curl -X POST http://192.168.1.143:5000/night_watch/calculate_position_for_watch \
+    -H "Content-Type: application/json" \
+    -d '{"watch_id": "a7fe555c-3873-4acb-998a-93676a8ad1a2"}'
+
