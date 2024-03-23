@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
-from database import DataBase  # Ensure this is accessible from this module
-from pymongo.errors import DuplicateKeyError
+from database import DataBase
 from pymongo import ReturnDocument, errors
 
 # Initialize database connection

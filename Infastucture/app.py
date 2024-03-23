@@ -1,7 +1,9 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import socket
-from RESTUser import user_bp  # Import the Blueprint from user.py
+
+# import blueprints for the application
+from RESTUser import user_bp
 from RESTCommunity import community_bp
 from RESTEvents import events_bp
 from RESTPosting import posting_bp

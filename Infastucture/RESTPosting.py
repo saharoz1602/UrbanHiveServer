@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request, abort
-from database import DataBase  # Ensure this is accessible from this module
+from flask import Blueprint, jsonify, request
+from database import DataBase
 from pymongo.errors import DuplicateKeyError
 import uuid
 
@@ -11,7 +11,7 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 
-# Create a Flask Blueprint for the event routes
+# Create a Flask Blueprint for the posting routes
 posting_bp = Blueprint('posting', __name__)
 
 

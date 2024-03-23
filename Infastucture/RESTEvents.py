@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
-from database import DataBase  # Ensure this is accessible from this module
+from database import DataBase
 from pymongo.errors import DuplicateKeyError
 import uuid
 
@@ -32,7 +32,7 @@ def add_event():
 
     # Create a new event document
     event_doc = {
-        'event_id' : event_id,
+        'event_id': event_id,
         'initiator': event_initiator_id,
         'community_name': community_name,
         'location': event_location,
@@ -145,6 +145,7 @@ def respond_to_event_request():
 
     return jsonify({"message": "Event response recorded and request removed"}), 200
 
+
 @events_bp.route('/events/delete_event', methods=['POST'])
 def delete_event():
     data = request.json
@@ -169,12 +170,10 @@ def delete_event():
         {'$pull': {'events': {'event_id': event_id_to_delete}}}
     )
 
-    # Optionally, remove any requests associated with this event from users' documents
+    # Remove any requests associated with this event from users' documents
     users.update_many(
         {},
         {'$pull': {'requests': {'event_id': event_id_to_delete}}}
     )
 
     return jsonify({'message': 'Event deleted successfully!'}), 200
-
-
