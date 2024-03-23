@@ -1,8 +1,12 @@
+import json
+import uuid
+
 from flask import Blueprint, jsonify, request
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from pymongo import errors
 from Logic.RadiusCalculator import RadiusCalculator
+from Logic.JSONEncoder import JSONEncoder
 
 # Initialize database connection
 dbase = DataBase()
@@ -34,8 +38,11 @@ def add_community():
     if not manager:
         return jsonify({"error": "Manager not found"}), 404
 
+    community_id = str(uuid.uuid4())
+
     # Prepare community object
     community = {
+        "community_id": community_id,
         "area": area,
         "location": location,
         "rules": [],
@@ -225,14 +232,13 @@ def get_communities_by_radius_and_location():
         local_communities = rd.locations_within_radius(center_location, int(radius), locations)
 
         communities_to_return = []
-        index = 0
-        # returning the communities by location from db
         for community in local_communities:
             community_to_add = communities.find_one({"location": community})
-            communities_to_return.insert(index, community_to_add)
-            index = index + 1
+            if community_to_add:
+                community_to_add['_id'] = str(community_to_add['_id'])  # Convert ObjectId to string
+                communities_to_return.append(community_to_add)
 
-        return jsonify({f"local communities :{communities_to_return} "}), 200
+        return jsonify({"local_communities": communities_to_return}), 200
     except Exception as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
@@ -253,5 +259,3 @@ def get_community_details_by_area_name():
 
     # Return the found community details
     return jsonify(community), 200
-
-
