@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import socket
-
+from database import DataBase
 # import blueprints for the application
 from RESTUser import user_bp
 from RESTCommunity import community_bp
@@ -27,6 +27,21 @@ app.register_blueprint(night_watch_bp)
 @app.route('/get_server_ip', methods=['GET'])
 def get_server_ip():
     return jsonify({"server_ip": host_ip}), 200
+
+
+dbase = DataBase()
+db = dbase.db
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    try:
+        # Try to perform a simple read operation on the database
+        db.command('ping')
+    except Exception as e:
+        return jsonify({'status': 'down', 'database': 'down', 'error': str(e)}), 500
+
+    return jsonify({'status': 'up', 'database': 'up'}), 200
 
 
 if __name__ == "__main__":

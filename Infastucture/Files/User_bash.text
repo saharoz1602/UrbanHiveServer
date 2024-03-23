@@ -38,12 +38,12 @@
 URL="http://192.168.1.143:5000/users"
 
 # Making a GET request to the URL
-curl -X GET http://<URL
+curl -X GET http://192.168.1.143:5000/users
 
 ———————————————————
 #Get user by id
 
-curl -X GET http://192.168.1.143:5000/user/<USER_ID> -----> put the id like that no <> needed : 1234
+curl -X GET http://192.168.1.143:5000/user/311285514 -----> put the id like that no <> needed : 1234
 
 ———————————————————
 delete user
@@ -334,3 +334,8 @@ curl -X POST http://192.168.1.143:5000/night_watch/calculate_position_for_watch 
     -H "Content-Type: application/json" \
     -d '{"watch_id": "a7fe555c-3873-4acb-998a-93676a8ad1a2"}'
 
+
+———————————————————
+Data base health check
+
+curl -X GET http://192.168.1.143:5000/health
