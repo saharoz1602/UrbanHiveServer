@@ -62,11 +62,22 @@ def add_new_night_watch():
         "positions_amount": positions_amount,
         "watch_members": []
     }
+    # Prepare the night_watch entry for the community document
+    community_night_watch_entry = {
+        "watch_date": watch_date,
+        "watch_id": watch_id
+    }
 
     try:
         # Insert the new watch into the night_watch collection
         night_watch.insert_one(watch)
+        # Update the communities collection with the night_watch details
+        communities.update_one(
+            {"area": community_area},
+            {"$push": {"night_watches": community_night_watch_entry}}
+        )
         return jsonify({"message": "Night watch added successfully", "watch_id": watch_id}), 200
+
     except DuplicateKeyError:
         return jsonify({"error": "Night watch with this ID already exists"}), 409
     except Exception as e:
@@ -74,4 +85,86 @@ def add_new_night_watch():
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
+@night_watch_bp.route('/night_watch/join_watch', methods=['POST'])
+def join_night_watch():
+    # Parse the JSON data from the request
+    data = request.get_json()
 
+    candidate_id = data.get('candidate_id')
+    night_watch_id = data.get('night_watch_id')
+
+    if not all([candidate_id, night_watch_id]):
+        # If any of the required fields are missing, return an error
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Check if the candidate exists
+    candidate = users.find_one({"id": candidate_id})
+    if not candidate:
+        return jsonify({"error": "Candidate not found"}), 404
+
+    # Find the night watch entry
+    watch = night_watch.find_one({"watch_id": night_watch_id})
+    if not watch:
+        return jsonify({"error": "Night watch not found"}), 404
+
+    # Check if there is space available in the watch
+    if len(watch['watch_members']) >= int(watch['positions_amount']):
+        return jsonify({"error": "No positions available in this night watch"}), 409
+
+    # Add candidate to the night watch
+    try:
+        night_watch.update_one(
+            {"watch_id": night_watch_id},
+            {"$push": {"watch_members": {"id": candidate_id, "name": candidate['name']}}}
+        )
+
+        # Add night watch info to the candidate's night_watches list
+        watch_entry_for_user = {
+            "date": watch['watch_date'],
+            "community_area": watch['community_area'],
+            "watch_id": night_watch_id
+        }
+        users.update_one(
+            {"id": candidate_id},
+            {"$push": {"night_watches": watch_entry_for_user}}
+        )
+
+        return jsonify({"message": "Candidate successfully joined night watch"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@night_watch_bp.route('/night_watch/close_night_watch', methods=['POST'])
+def close_night_watch():
+    data = request.get_json()
+    watch_id = data.get('watch_id')
+
+    if not watch_id:
+        return jsonify({"error": "Missing watch_id field"}), 400
+
+    # Find the night watch entry to get the details before deletion
+    watch = night_watch.find_one({"watch_id": watch_id})
+    if not watch:
+        return jsonify({"error": "Night watch not found"}), 404
+
+    # Store community_area and watch_date to remove from the community document
+    community_area = watch['community_area']
+    watch_date = watch['watch_date']
+
+    # Remove the night watch from the night_watch collection
+    night_watch.delete_one({"watch_id": watch_id})
+
+    # Remove the night watch from all users' night_watches list
+    users.update_many(
+        {},
+        {"$pull": {"night_watches": {"watch_id": watch_id}}}
+    )
+
+    # Remove the night watch from the community's night_watches list
+    communities.update_one(
+        {"area": community_area},
+        {"$pull": {"night_watches": {"watch_id": watch_id}}}
+    )
+
+    return jsonify({"message": "Night watch closed successfully"}), 200
