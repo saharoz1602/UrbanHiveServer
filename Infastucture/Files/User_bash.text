@@ -288,3 +288,20 @@ curl -X POST http://192.168.1.143:5000/communities/respond_to_join_request \
 -d '{"request_id": "59d1ed52-d90e-4c42-8df4-1f57f0e5e35a", "response": 1}'
 
 
+
+
+
+———————————————————
+
+create new night watch
+
+curl -X POST http://192.168.1.143:5000/night_watch/add_night_watch \
+-H "Content-Type: application/json" \
+-d '{
+    "initiator_id": "311156616",
+    "community_area": "Kerem Street",
+    "watch_date": "2024-03-25",
+    "watch_radius": "5",
+    "positions_amount": "5"
+}'
+
