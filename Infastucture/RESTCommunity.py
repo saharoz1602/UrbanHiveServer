@@ -258,3 +258,23 @@ def get_community_details_by_area_name():
 
     # Return the found community details
     return jsonify(community), 200
+
+
+@community_bp.route('/communities/get_all', methods=['GET'])
+def get_communities():
+    try:
+        # Retrieve all community documents from the database
+        all_communities = communities.find({})
+
+        # Convert each MongoDB document into a Python dictionary
+        communities_list = []
+        for community in all_communities:
+            # Optionally, convert the _id field from ObjectId to string if you want to include it
+            community['_id'] = str(community['_id'])
+            communities_list.append(community)
+
+        # Return the list of communities as JSON
+        return jsonify({"communities": communities_list}), 200
+    except errors.PyMongoError as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
