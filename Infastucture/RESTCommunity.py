@@ -6,7 +6,6 @@ from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from pymongo import errors
 from Logic.RadiusCalculator import RadiusCalculator
-from Logic.JSONEncoder import JSONEncoder
 
 # Initialize database connection
 dbase = DataBase()
