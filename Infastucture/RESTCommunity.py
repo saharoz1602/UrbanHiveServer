@@ -278,3 +278,90 @@ def get_communities():
     except errors.PyMongoError as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
 
+
+@community_bp.route('/communities/request_to_join', methods=['POST'])
+def request_to_join_community():
+    data = request.json
+    area = data.get('area')
+    sender_id = data.get('sender_id')
+    sender_name = data.get('sender_name')
+
+    # Validate sender_id
+    sender = users.find_one({"id": sender_id})
+    if not sender:
+        return jsonify({"error": "Invalid sender ID"}), 404
+
+    # Check if the community exists
+    community = communities.find_one({"area": area})
+    if not community:
+        return jsonify({"error": "Community does not exist"}), 404
+
+    # Generate a unique request ID
+    request_id = str(uuid.uuid4())
+
+    # Create the join request object for the user's requests array
+    user_join_request = {
+        "community_name_request": area,
+        "status": "pending"
+    }
+
+    # Append the join request to the user's requests array
+    users.update_one({"id": sender_id}, {"$push": {"requests": user_join_request}})
+
+    # Create the request object for the community manager
+    join_request = {
+        "request_id": request_id,
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "content": "can i join the community?"
+    }
+
+    # Update the community document with the join request
+    communities.update_one({"area": area}, {"$set": {"join_request": join_request}})
+
+    return jsonify({"message": "Join request sent successfully", "request_id": request_id}), 200
+
+
+@community_bp.route('/communities/respond_to_join_request', methods=['POST'])
+def respond_to_community_join_request():
+    data = request.json
+    request_id = data.get('request_id')
+    response = data.get('response')  # Should be 0 (decline) or 1 (accept)
+
+    # Validate request_id by checking if any community has this join request
+    community = communities.find_one({"join_request.request_id": request_id})
+    if not community:
+        return jsonify({"error": "Invalid request ID"}), 404
+
+    # Get the area name from the community found
+    community_area = community['area']
+    # Get sender_id from the join_request in the community document
+    sender_id = community['join_request']['sender_id']
+
+    # Retrieve the sender's user document
+    sender_user = users.find_one({"id": sender_id})
+    if not sender_user:
+        return jsonify({"error": "Sender user not found"}), 404
+
+    # If response is 1, add the user to the community members and user's communities array
+    if response == 1:
+        sender_details = {"id": sender_id, "name": sender_user['name']}
+        # Add the user to the community members
+        communities.update_one({"join_request.request_id": request_id}, {"$push": {"communityMembers": sender_details}})
+        # Add the community area name to the user's communities array
+        users.update_one({"id": sender_id}, {"$push": {"communities": community_area}})
+
+    # Remove the join request from the community document
+    communities.update_one({"join_request.request_id": request_id}, {"$unset": {"join_request": ""}})
+
+    # Remove the request from the user's requests array
+    user_join_request = {
+        "community_name_request": community_area,
+        "status": "pending"
+    }
+    users.update_one({"id": sender_id}, {"$pull": {"requests": user_join_request}})
+
+    return jsonify({"message": "Response processed successfully"}), 200
+
+
+

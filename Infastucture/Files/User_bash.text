@@ -271,3 +271,20 @@ curl -X POST http://192.168.1.143:5000/events/delete_event \
 get all communities
 
 curl -X GET http://192.168.1.143:5000/communities/get_all
+
+———————————————————
+request to join community
+
+curl -X POST http://192.168.1.143:5000/communities/request_to_join \
+-H "Content-Type: application/json" \
+-d '{"area": "Kerem Street", "sender_id": "311285514", "sender_name": "sahar"}'
+
+
+———————————————————
+respond to join community request
+
+curl -X POST http://192.168.1.143:5000/communities/respond_to_join_request \
+-H "Content-Type: application/json" \
+-d '{"request_id": "59d1ed52-d90e-4c42-8df4-1f57f0e5e35a", "response": 1}'
+
+
