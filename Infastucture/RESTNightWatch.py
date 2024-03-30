@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from datetime import datetime
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.NightWatchPositionsCalculator import NightWatchPositionsCalculator
@@ -241,4 +242,39 @@ def calculate_position_for_watch():
         # For any exception, return a database error
         night_watch_logger.error(f"Database error: details : {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
+
+
+@night_watch_bp.route('/night_watch/by_community', methods=['POST'])
+def get_night_watches_by_community():
+    data = request.get_json()
+    community_name = data.get('community_name')
+
+    if not community_name:
+        # If community_name is not provided, return an error
+        night_watch_logger.error("Missing 'community_name' in request body, status code is 400")
+        return jsonify({"error": "Missing 'community_name' in request body"}), 400
+
+    # Get the current date in the same format as your 'watch_date'
+    current_date = datetime.now().strftime("%Y-%m-%d")
+
+    # Attempt to find future night watches with the given community_area
+    # Ensure your 'watch_date' in the database is stored in a format that allows this type of comparison
+    matching_night_watches = list(night_watch.find({
+        "community_area": community_name,
+        "watch_date": {"$gte": current_date}
+    }, {"_id": 0}))
+
+    if not matching_night_watches:
+        # If no future night watches are found for the community, check if the community exists
+        if not communities.find_one({"area": community_name}):
+            night_watch_logger.error(f"Community named '{community_name}' not found, status code is 404")
+            return jsonify({"error": "Community not found"}), 404
+        else:
+            # The community exists but has no future night watches
+            night_watch_logger.info(f"No future night watches found for community '{community_name}', status code is 200")
+            return jsonify({"message": "No future night watches found for this community"}), 200
+
+    # If future night watches are found, return them
+    night_watch_logger.info(f"Found future night watches for community '{community_name}', status code is 200")
+    return jsonify({"night_watches": matching_night_watches}), 200
 

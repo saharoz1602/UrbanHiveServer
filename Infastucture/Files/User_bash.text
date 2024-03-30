@@ -336,6 +336,14 @@ curl -X POST http://192.168.1.143:5000/night_watch/calculate_position_for_watch 
 
 
 ———————————————————
+Get the night watch by community name
+
+curl -X POST http://192.168.1.143:5000/night_watch/by_community \
+     -H "Content-Type: application/json" \
+     -d '{"community_name": "Kerem Street"}'
+
+———————————————————
 Data base health check
 
 curl -X GET http://192.168.1.143:5000/health
+

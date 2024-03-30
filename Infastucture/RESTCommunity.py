@@ -255,7 +255,7 @@ def get_communities_by_radius_and_location():
         return jsonify({"local_communities": communities_to_return}), 200
     except Exception as e:
         community_logger.error(f"Database error, details is {str(e)}, status code is 500")
-        return jsonify({"error": "Database error", "details": str(e)}), 500
+        return jsonify({"error": "Database error", "details": str(e)}), 5
 
 
 @community_bp.route('/communities/details_by_area', methods=['POST'])
