@@ -1,4 +1,8 @@
+import os
+
 from flask import Blueprint, jsonify, request, abort
+
+from Infastucture.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.app_logger import setup_logger
@@ -11,7 +15,8 @@ communities = db['communities']
 users = db['users']
 events = db['events']
 
-events_logger = setup_logger('events_logger', 'events.log')
+log_file_path = os.path.join(config.application_file_path, "events.log")
+events_logger = setup_logger('events_logger', log_file_path)
 
 # Create a Flask Blueprint for the event routes
 events_bp = Blueprint('events', __name__)

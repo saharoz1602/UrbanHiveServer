@@ -1,5 +1,9 @@
+import os
+
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+
+from Infastucture.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.NightWatchPositionsCalculator import NightWatchPositionsCalculator
@@ -15,7 +19,8 @@ events = db['events']
 posting = db['posting']
 night_watch = db['night_watch']
 
-night_watch_logger = setup_logger('night_watch_logger', 'night_watch.log')
+log_file_path = os.path.join(config.application_file_path, "night_watch.log")
+night_watch_logger = setup_logger('night_watch_logger', log_file_path)
 
 # Create a Flask Blueprint for the posting routes
 night_watch_bp = Blueprint('night_watch', __name__)

@@ -1,14 +1,18 @@
+import os
+
 from flask import Blueprint, jsonify, request, abort
 from database import DataBase
 from pymongo import ReturnDocument, errors
 from Logic.app_logger import setup_logger
+from Infastucture.Files import config
 
 # Initialize database connection
 dbase = DataBase()
 db = dbase.db
 users = db['users']
 
-user_logger = setup_logger('user_logger', 'user.log')
+log_file_path = os.path.join(config.application_file_path, "user.log")
+user_logger = setup_logger('user_logger', log_file_path)
 
 # Create a Flask Blueprint for the user routes
 user_bp = Blueprint('user', __name__)
