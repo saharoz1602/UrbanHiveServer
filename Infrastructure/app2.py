@@ -10,8 +10,8 @@ from RESTEvents import events_bp
 from RESTPosting import posting_bp
 from RESTNightWatch import night_watch_bp
 
-def create_app():
 
+def create_app():
     app = Flask(__name__)
     CORS(app)
 
@@ -66,9 +66,11 @@ def create_app():
 
     return app
 
+
 def run_server(host='0.0.0.0', port=5000):
     app = create_app()
     app.run(host=host, port=port, debug=False)
+
 
 if __name__ == "__main__":
     host_name = socket.gethostname()

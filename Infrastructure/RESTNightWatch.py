@@ -3,7 +3,7 @@ import os
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 
-from Infastucture.Files import config
+from Infrastructure.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.NightWatchPositionsCalculator import NightWatchPositionsCalculator

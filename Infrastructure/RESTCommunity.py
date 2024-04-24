@@ -4,7 +4,7 @@ import uuid
 
 from flask import Blueprint, jsonify, request
 
-from Infastucture.Files import config
+from Infrastructure.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from pymongo import errors
