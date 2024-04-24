@@ -2,7 +2,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-
 def setup_logger(name, log_file, level=logging.INFO, maxBytes=10000, backupCount=3):
     """
     Initialize and configure a logger with rotation handling.
@@ -23,7 +22,7 @@ def setup_logger(name, log_file, level=logging.INFO, maxBytes=10000, backupCount
     logging.Logger: A configured Logger instance that writes to the specified file and rotates logs as configured.
 
     Example usage:
-    logger = setup_logger('my_app', 'app.log')
+    logger = setup_logger('my_app', '/path/to/your/logfile/app.log')
     logger.info('This is an informational message.')
     """
 

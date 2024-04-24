@@ -1,7 +1,10 @@
 import json
+import os
 import uuid
 
 from flask import Blueprint, jsonify, request
+
+from Infrastructure.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from pymongo import errors
@@ -14,7 +17,8 @@ db = dbase.db
 communities = db['communities']
 users = db['users']  # Assuming users collection is also accessible
 
-community_logger = setup_logger('community_logger', 'community.log')
+log_file_path = os.path.join(config.application_file_path, "communities.log")
+community_logger = setup_logger('community_logger', log_file_path)
 
 # Create a Flask Blueprint for t the community routes
 community_bp = Blueprint('community', __name__)

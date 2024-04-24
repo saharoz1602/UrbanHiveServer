@@ -1,4 +1,8 @@
+import os
+
 from flask import Blueprint, jsonify, request
+
+from Infrastructure.Files import config
 from database import DataBase
 from pymongo.errors import DuplicateKeyError
 from Logic.app_logger import setup_logger
@@ -12,7 +16,8 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 
-posting_logger = setup_logger('posting_logger', 'posting.log')
+log_file_path = os.path.join(config.application_file_path, "posting.log")
+posting_logger = setup_logger('posting_logger', log_file_path)
 
 # Create a Flask Blueprint for the posting routes
 posting_bp = Blueprint('posting', __name__)

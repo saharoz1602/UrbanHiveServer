@@ -1,14 +1,18 @@
+import os
+
 from flask import Blueprint, jsonify, request, abort
 from database import DataBase
 from pymongo import ReturnDocument, errors
 from Logic.app_logger import setup_logger
+from Infrastructure.Files import config
 
 # Initialize database connection
 dbase = DataBase()
 db = dbase.db
 users = db['users']
 
-user_logger = setup_logger('user_logger', 'user.log')
+log_file_path = os.path.join(config.application_file_path, "user.log")
+user_logger = setup_logger('user_logger', log_file_path)
 
 # Create a Flask Blueprint for the user routes
 user_bp = Blueprint('user', __name__)
@@ -34,64 +38,36 @@ def get_users():
 
 @user_bp.route('/user/', methods=['POST'])
 def add_user():
-    """
-    EXAMPLE OF USER OBJECT IN THE MONGO DB
-    "{
-    "id":"311156616",
-      "name":"danor",
-      "email":"danors@gmail.com",
-      "password":"Ds0502660865",
-      "location":{
-                "latitude":37.4219909,
-                "longitude":-122.0839496}}"
-      )
-      "friends" :[],
-      "requests" :[],
-      "radius" : ""
-      }
-
-    """
-    """
-        Add a new user to the database with the specified fields.
-        The fields "friends", "requests", and "radius" are initialized as specified.
-        """
-    user_data = request.get_json()
-
-    # Check for required fields
-    required_fields = ["id", "name", "email", "password", "phoneNumber", "location"]
-    if not all(field in user_data for field in required_fields):
-        abort(400, description="Missing required field(s)")
-
-    # Check for location sub-fields
-    if not all(field in user_data["location"] for field in ["latitude", "longitude"]):
-        abort(400, description="Missing required location field(s)")
-
-    # Validate data types for latitude and longitude
-    if not isinstance(user_data["location"]["latitude"], (float, int)) or \
-            not isinstance(user_data["location"]["longitude"], (float, int)):
-        abort(400, description="Invalid data type for latitude or longitude")
-
-    # Initialize fields as specified
-    user_data["friends"] = []
-    user_data["requests"] = []
-    user_data["radius"] = None  # Or set to "" if you strictly need an empty string
-
-    # Check if a user with the same ID or email already exists
-    if users.find_one({"$or": [{"id": user_data["id"]}, {"email": user_data["email"]}]}):
-        user_logger.error(f"User with this ID or email already exists, status code is 409")
-        return jsonify({"message": "User with this ID or email already exists"}), 409
-
     try:
-        # Insert the user data into the MongoDB collection
+        user_data = request.get_json()
+
+        required_fields = ["id", "name", "email", "password", "phoneNumber", "location"]
+        if not all(field in user_data for field in required_fields):
+            return jsonify({"description": "Missing required field(s)"}), 400
+
+        if not all(field in user_data["location"] for field in ["latitude", "longitude"]):
+            return jsonify({"description": "Missing required field(s)"}), 400
+
+        if not isinstance(user_data["location"]["latitude"], (float, int)) or \
+                not isinstance(user_data["location"]["longitude"], (float, int)):
+            return jsonify({"description": "Invalid data type for latitude or longitude"}), 400
+
+        user_data["friends"] = []
+        user_data["requests"] = []
+        user_data["radius"] = None
+
+        if users.find_one({"$or": [{"id": user_data["id"]}, {"email": user_data["email"]}]}):
+            user_logger.error("User with this ID or email already exists, status code is 409")
+            return jsonify({"message": "User with this ID or email already exists"}), 409
+
         inserted = users.insert_one(user_data)
-        # Convert ObjectId to string and return the user data (without password for security)
-        user_data.pop("password", None)  # Remove password from response for security
+        user_data.pop("password", None)
         user_data["_id"] = str(inserted.inserted_id)
-        user_logger.info(f"User added successfully, status code is 201")
+        user_logger.info("User added successfully, status code is 201")
         return jsonify({"message": "User added successfully", "user": user_data}), 201
-    except errors.DuplicateKeyError as e:
-        user_logger.error(f"User with this data or email already exists, status code is 409")
-        return jsonify({"error": "User with this data already exists", "detail": str(e)}), 409
+    except Exception as e:
+        user_logger.error(f"Unexpected error occurred: {str(e)}")
+        return jsonify({"error": "Internal Server Error", "detail": str(e)}), 500
 
 
 @user_bp.route('/user/<user_id>', methods=['GET'])
@@ -102,7 +78,7 @@ def get_user_by_id(user_id):
     # Check if the user exists
     if user is None:
         # If no user is found, return a 404 Not Found response
-        abort(404, description="User not found")
+        return jsonify({"error": "User not found!"}), 404
 
     # Convert ObjectId to string for the response
     user["_id"] = str(user["_id"])
@@ -161,7 +137,7 @@ def delete_user(user_id):
     # Check if the user exists
     if users.find_one({"id": user_id}) is None:
         # If no user is found, return a 404 Not Found response
-        abort(404, description="User not found")
+        return jsonify({"error": "User not found!"}), 404
 
     # Delete the user from the MongoDB collection
     users.delete_one({"id": user_id})
@@ -189,9 +165,9 @@ def check_user_password():
 
     # Check if the password matches
     if user.get('password') == user_data['password']:
-        return jsonify({"result": "True"}), 200
+        return jsonify({"result": True}), 200
     else:
-        return jsonify({"result": "False"}), 401  # Changed to 401 to indicate unauthorized access
+        return jsonify({"result": False}), 401  # Changed to 401 to indicate unauthorized access
 
 
 @user_bp.route('/user/change-password', methods=['POST'])
