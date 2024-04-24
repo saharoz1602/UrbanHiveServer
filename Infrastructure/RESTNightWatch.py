@@ -36,6 +36,8 @@ def add_new_night_watch():
     watch_date = data.get('watch_date')
     watch_radius = data.get('watch_radius')
     positions_amount = data.get('positions_amount')
+    lat = data.get('latitude')
+    long = data.get('longitude')
 
     if not all([initiator_id, community_area, watch_date, watch_radius, positions_amount]):
         # If any of the required fields are missing, return an error
@@ -45,7 +47,8 @@ def add_new_night_watch():
     # Validate that there isn't already a night watch with the same area and date
     existing_watch = night_watch.find_one({"community_area": community_area, "watch_date": watch_date})
     if existing_watch:
-        night_watch_logger.error(f"Error: A night watch is already scheduled for this community area and date, status code is 409")
+        night_watch_logger.error(
+            f"Error: A night watch is already scheduled for this community area and date, status code is 409")
         return jsonify({"error": "A night watch is already scheduled for this community area and date"}), 409
 
     # Check if the initiator is a member of the community
@@ -74,6 +77,10 @@ def add_new_night_watch():
         "watch_date": watch_date,
         "watch_radius": watch_radius,
         "positions_amount": positions_amount,
+        "location": {
+            "latitude": lat,
+            "longitude": long
+        },
         "watch_members": []
     }
     # Prepare the night_watch entry for the community document
@@ -276,10 +283,10 @@ def get_night_watches_by_community():
             return jsonify({"error": "Community not found"}), 404
         else:
             # The community exists but has no future night watches
-            night_watch_logger.info(f"No future night watches found for community '{community_name}', status code is 200")
+            night_watch_logger.info(
+                f"No future night watches found for community '{community_name}', status code is 200")
             return jsonify({"message": "No future night watches found for this community"}), 200
 
     # If future night watches are found, return them
     night_watch_logger.info(f"Found future night watches for community '{community_name}', status code is 200")
     return jsonify({"night_watches": matching_night_watches}), 200
-
