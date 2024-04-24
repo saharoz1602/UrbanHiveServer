@@ -63,7 +63,7 @@ def add_community():
     try:
         users.update_one({"id": manager_id}, {"$push": {"communities": area}})
         result = communities.insert_one(community)
-        community_logger.info(f"Community added id = {str(result.inserted_id)} status code = 201" )
+        community_logger.info(f"Community added id = {str(result.inserted_id)} status code = 201")
         return jsonify({"message": "Community added", "id": str(result.inserted_id)}), 201
     except DuplicateKeyError:
         community_logger.error(f"Community already exists, status code = 400")
@@ -137,7 +137,8 @@ def respond_to_community_request():
             # Remove community request for both users
             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
             users.update_one({"id": sender_id}, {"$unset": {"communityRequest": ""}})
-            community_logger.info(f"Community request confirmed, users updated, and location added to community, status code is 200")
+            community_logger.info(
+                f"Community request confirmed, users updated, and location added to community, status code is 200")
             return jsonify(
                 {"message": "Community request confirmed, users updated, and location added to community"}), 200
         except errors.PyMongoError as e:
@@ -375,7 +376,7 @@ def respond_to_community_join_request():
 
     # If response is 1, add the user to the community members and user's communities array
     if response == 1:
-        sender_details = {"id": sender_id, "name": sender_user['name']}
+        sender_details = {"id": sender_id, "name": sender_user['name'], 'phoneNumber': sender_user['phoneNumber']}
         # Add the user to the community members
         communities.update_one({"join_request.request_id": request_id}, {"$push": {"communityMembers": sender_details}})
         # Add the community area name to the user's communities array
@@ -392,6 +393,3 @@ def respond_to_community_join_request():
     users.update_one({"id": sender_id}, {"$pull": {"requests": user_join_request}})
     community_logger.info(f" JResponse processed successfully , status code is 200")
     return jsonify({"message": "Response processed successfully"}), 200
-
-
-
