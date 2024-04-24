@@ -11,8 +11,20 @@ from RESTPosting import posting_bp
 from RESTNightWatch import night_watch_bp
 
 
+from flask import Flask, jsonify, request
+from bson import ObjectId
+import json
+
+class MongoJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        return super().default(obj)
+
+
 def create_app():
     app = Flask(__name__)
+    app.json_encoder = MongoJsonEncoder
     CORS(app)
 
     # Setup logging
