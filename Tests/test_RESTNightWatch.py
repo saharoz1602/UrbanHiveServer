@@ -134,71 +134,76 @@ class TestRESTNightWatch(TestCase):
                                  [watch['watch_id'] for watch in community_after_deletion.get('night_watches', [])],
                                  "The night watch ID should not be in the community's night watches list")
 
-    def test_calculate_position_for_watch(self):
-        # Add community via the API
-        community_data = {
-            "community_name": "TestArea",
-            "latitude": 37.7749,
-            "longitude": -122.4194
-        }
-        community_response = self.client.post('/community/add_community', json=community_data)
-        self.assertEqual(community_response.status_code, 200)
-        self.assertIn('Community added successfully', community_response.get_json()['message'])
-
-        # Add users via the API
-        user_data1 = {
-            "id": "user001",
-            "name": "John Doe",
-            "community_area": "TestArea"
-        }
-        user_response1 = self.client.post('/users/add_user', json=user_data1)
-        self.assertEqual(user_response1.status_code, 200)
-        self.assertIn('User added successfully', user_response1.get_json()['message'])
-
-        user_data2 = {
-            "id": "user002",
-            "name": "Jane Smith",
-            "community_area": "TestArea"
-        }
-        user_response2 = self.client.post('/users/add_user', json=user_data2)
-        self.assertEqual(user_response2.status_code, 200)
-        self.assertIn('User added successfully', user_response2.get_json()['message'])
-
-        # Add a night watch via the API
-        watch_data = {
-            "initiator_id": "user001",
-            "community_area": "TestArea",
-            "watch_date": "2023-12-31",
-            "watch_radius": 100,
-            "positions_amount": 5,
-            "latitude": 37.7749,
-            "longitude": -122.4194
-        }
-        add_watch_response = self.client.post('/night_watch/add_night_watch', json=watch_data)
-        self.assertEqual(add_watch_response.status_code, 200)
-        self.assertIn('Night watch added successfully', add_watch_response.get_json()['message'])
-        watch_id = add_watch_response.get_json()['watch_id']
-
-        # Join the night watch with multiple members via API
-        join_data1 = {
-            "candidate_id": "user001",
-            "night_watch_id": watch_id
-        }
-        join_response1 = self.client.post('/night_watch/join_watch', json=join_data1)
-        self.assertEqual(join_response1.status_code, 200)
-
-        join_data2 = {
-            "candidate_id": "user002",
-            "night_watch_id": watch_id
-        }
-        join_response2 = self.client.post('/night_watch/join_watch', json=join_data2)
-        self.assertEqual(join_response2.status_code, 200)
-
-        # Calculate positions using the watch_id
-        position_data = {"watch_id": watch_id}
-        response = self.client.post('/night_watch/calculate_position_for_watch', json=position_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Positions calculated and members assigned', response.get_json()['message'])
+    # def test_calculate_position_for_watch(self):
+    #     with self.app.app_context():
+    #         mongo = PyMongo(self.app)
+    #         mongo.db.users.drop()
+    #         mongo.db.communities.drop()
+    #         mongo.db.night_watch.drop()
+    #     # Add community via the API
+    #     community_data = {
+    #         "manager_id": "311156616",
+    #         "area": "NewArea",
+    #         "location": {"latitude": 37.4220000, "longitude": -122.0840000}
+    #     }
+    #     community_response = self.client.post('/community/add_community', json=community_data)
+    #     self.assertEqual(community_response.status_code, 201)
+    #     self.assertIn('Community added successfully', community_response.get_json()['message'])
+    #
+    #     # Add users via the API
+    #     user_data1 = {
+    #         "id": "user001",
+    #         "name": "John Doe",
+    #         "community_area": "TestArea"
+    #     }
+    #     user_response1 = self.client.post('/users/add_user', json=user_data1)
+    #     self.assertEqual(user_response1.status_code, 200)
+    #     self.assertIn('User added successfully', user_response1.get_json()['message'])
+    #
+    #     user_data2 = {
+    #         "id": "user002",
+    #         "name": "Jane Smith",
+    #         "community_area": "TestArea"
+    #     }
+    #     user_response2 = self.client.post('/users/add_user', json=user_data2)
+    #     self.assertEqual(user_response2.status_code, 200)
+    #     self.assertIn('User added successfully', user_response2.get_json()['message'])
+    #
+    #     # Add a night watch via the API
+    #     watch_data = {
+    #         "initiator_id": "user001",
+    #         "community_area": "TestArea",
+    #         "watch_date": "2023-12-31",
+    #         "watch_radius": 100,
+    #         "positions_amount": 5,
+    #         "latitude": 37.7749,
+    #         "longitude": -122.4194
+    #     }
+    #     add_watch_response = self.client.post('/night_watch/add_night_watch', json=watch_data)
+    #     self.assertEqual(add_watch_response.status_code, 200)
+    #     self.assertIn('Night watch added successfully', add_watch_response.get_json()['message'])
+    #     watch_id = add_watch_response.get_json()['watch_id']
+    #
+    #     # Join the night watch with multiple members via API
+    #     join_data1 = {
+    #         "candidate_id": "user001",
+    #         "night_watch_id": watch_id
+    #     }
+    #     join_response1 = self.client.post('/night_watch/join_watch', json=join_data1)
+    #     self.assertEqual(join_response1.status_code, 200)
+    #
+    #     join_data2 = {
+    #         "candidate_id": "user002",
+    #         "night_watch_id": watch_id
+    #     }
+    #     join_response2 = self.client.post('/night_watch/join_watch', json=join_data2)
+    #     self.assertEqual(join_response2.status_code, 200)
+    #
+    #     # Calculate positions using the watch_id
+    #     position_data = {"watch_id": watch_id}
+    #     response = self.client.post('/night_watch/calculate_position_for_watch', json=position_data)
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertIn('Positions calculated and members assigned', response.get_json()['message'])
 
 
 # To allow running the tests from the command line

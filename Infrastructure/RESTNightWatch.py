@@ -19,8 +19,15 @@ events = db['events']
 posting = db['posting']
 night_watch = db['night_watch']
 
-log_file_path = os.path.join(config.application_file_path, "night_watch.log")
-night_watch_logger = setup_logger('night_watch_logger', log_file_path)
+# Ensure the log file directory exists
+log_file_path = os.path.join(config.application_file_path, "logs/nightwatch/night_watch.log")
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+# Initialize the logger
+try:
+    night_watch_logger = setup_logger('night_watch_logger', log_file_path)
+except Exception as e:
+    print(f"Error setting up logger: {e}")
 
 # Create a Flask Blueprint for the posting routes
 night_watch_bp = Blueprint('night_watch', __name__)

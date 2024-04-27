@@ -17,8 +17,18 @@ db = dbase.db
 communities = db['communities']
 users = db['users']  # Assuming users collection is also accessible
 
+
+# Ensure the log file directory exists
 log_file_path = os.path.join(config.application_file_path, "logs/communities/communities.log")
-community_logger = setup_logger('community_logger', log_file_path)
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+# Initialize the logger
+try:
+    community_logger = setup_logger('night_watch_logger', log_file_path)
+except Exception as e:
+    print(f"Error setting up logger: {e}")
+
+
 
 # Create a Flask Blueprint for t the community routes
 community_bp = Blueprint('community', __name__)
@@ -125,9 +135,9 @@ def respond_to_community_request():
             receiver_email = receiver_user.get('email')
             receiver_phone_number = receiver_user.get('phoneNumber')
 
-
             # Add receiver to community's members list with id, name, and location
-            community_member_info = {"id": receiver_id, "name": receiver_name, "location": receiver_location,"email" : receiver_email,"phone_number" : receiver_phone_number}
+            community_member_info = {"id": receiver_id, "name": receiver_name, "location": receiver_location,
+                                     "email": receiver_email, "phone_number": receiver_phone_number}
             communities.update_one({"area": area}, {"$push": {"communityMembers": community_member_info}})
 
             # Add location to communities collection for the receiver

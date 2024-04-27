@@ -16,8 +16,18 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 
+
+# Ensure the log file directory exists
 log_file_path = os.path.join(config.application_file_path, "logs/posting/posting.log")
-posting_logger = setup_logger('posting_logger', log_file_path)
+os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+# Initialize the logger
+try:
+    posting_logger = setup_logger('night_watch_logger', log_file_path)
+except Exception as e:
+    print(f"Error setting up logger: {e}")
+
+
 
 # Create a Flask Blueprint for the posting routes
 posting_bp = Blueprint('posting', __name__)
