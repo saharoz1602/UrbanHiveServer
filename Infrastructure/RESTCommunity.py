@@ -122,9 +122,12 @@ def respond_to_community_request():
 
             receiver_name = receiver_user.get('name')
             receiver_location = receiver_user.get('location')
+            receiver_email = receiver_user.get('email')
+            receiver_phone_number = receiver_user.get('phoneNumber')
+
 
             # Add receiver to community's members list with id, name, and location
-            community_member_info = {"id": receiver_id, "name": receiver_name, "location": receiver_location}
+            community_member_info = {"id": receiver_id, "name": receiver_name, "location": receiver_location,"email" : receiver_email,"phone_number" : receiver_phone_number}
             communities.update_one({"area": area}, {"$push": {"communityMembers": community_member_info}})
 
             # Add location to communities collection for the receiver
