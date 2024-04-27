@@ -157,50 +157,6 @@ def respond_to_community_request():
             return jsonify({"error": "Database error", "details": str(e)}), 500
 
 
-# @community_bp.route('/communities/respond_to_community_request', methods=['POST'])
-# def respond_to_community_request():
-#     data = request.json
-#     receiver_id = data.get('receiver_id')
-#     sender_id = data.get('sender_id')
-#     response = data.get('response')
-#     area = data.get('area')
-#
-#     if response == 1:
-#         # Confirming the community request
-#         try:
-#             # Retrieve receiver's name
-#             receiver_user = users.find_one({"id": receiver_id}, {"name": 1})
-#             if not receiver_user:
-#                 return jsonify({"error": "Receiver user not found"}), 404
-#             receiver_name = receiver_user.get('name')
-#
-#             # Add receiver to community's members list with id and name
-#             community_member_info = {"id": receiver_id, "name": receiver_name}
-#             communities.update_one({"area": area}, {"$push": {"communityMembers": community_member_info}})
-#
-#             # Update both users' communities list
-#             users.update_one({"id": receiver_id}, {"$push": {"communities": area}})
-#             users.update_one({"id": sender_id}, {"$push": {"communities": area}})
-#
-#             # Remove community request for both users
-#             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
-#             users.update_one({"id": sender_id}, {"$unset": {"communityRequest": ""}})
-#
-#             return jsonify({"message": "Community request confirmed and users updated"}), 200
-#         except errors.PyMongoError as e:
-#             return jsonify({"error": "Database error", "details": str(e)}), 500
-#     elif response == 0:
-#         # Declining the community request
-#         try:
-#             # Remove community request for both users
-#             users.update_one({"id": receiver_id}, {"$unset": {"communityRequest": ""}})
-#             users.update_one({"id": sender_id}, {"$unset": {"communityRequest": ""}})
-#
-#             return jsonify({"message": "Community request declined and removed"}), 200
-#         except errors.PyMongoError as e:
-#             return jsonify({"error": "Database error", "details": str(e)}), 500
-
-
 @community_bp.route('/communities/delete_user_from_community', methods=['POST'])
 def delete_user_from_community():
     data = request.json
@@ -261,7 +217,6 @@ def get_communities_by_radius_and_location():
     except Exception as e:
         community_logger.error(f"Database error, details is {str(e)}, status code is 500")
         return jsonify({"error": "Database error", "details": str(e)}), 500
-
 
 
 @community_bp.route('/communities/details_by_area', methods=['POST'])

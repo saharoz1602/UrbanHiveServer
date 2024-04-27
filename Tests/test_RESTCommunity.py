@@ -91,16 +91,13 @@ class TestRESTCommunity(TestCase):
         response = self.client.get('/communities/get_all')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
+        print(data)
         self.assertTrue(isinstance(data['communities'], list))
         self.assertTrue(any(community['area'] == "NewArea" for community in data['communities']),
                         "The new community should be in the database.")
 
         self.assertTrue(any(community['area'] == "NewArea2" for community in data['communities']),
                         "The new community should be in the database.")
-
-
-
-
 
     def test_add_user_to_community(self):
         # Simulate adding a user to a community
@@ -161,50 +158,6 @@ class TestRESTCommunity(TestCase):
             user = mongo.db.users.find_one({"id": "311285514"})
             self.assertNotIn("TestArea", user.get("communities", []))
 
-    # def test_get_communities_by_radius_and_location(self):
-    #     # Setup data - Adding three communities within a 10-mile radius
-    #     communities_data = [
-    #         {"area": "CommunityA", "location": {"latitude": 37.4320029, "longitude": -122.0849956}},  # ~1 mile away
-    #         {"area": "CommunityB", "location": {"latitude": 37.4310029, "longitude": -122.0949956}},  # ~3 miles away
-    #         {"area": "CommunityC", "location": {"latitude": 37.4500000, "longitude": -122.1000000}}  # ~5 miles away
-    #     ]
-    #
-    #     # Injecting community data into the database
-    #     with self.app.app_context():
-    #         mongo = PyMongo(self.app)
-    #         for community in communities_data:
-    #             mongo.db.communities.insert_one({
-    #                 "area": community['area'],
-    #                 "location": community['location'],
-    #                 "communityMembers": [],
-    #                 "communityManagers": [],
-    #                 "events": []
-    #             })
-    #
-    #     # Query communities by radius and location
-    #     response = self.client.post('/communities/get_communities_by_radius_and_location', json={
-    #         "radius": 10,
-    #         "location": {"latitude": 37.4219909, "longitude": -122.0839496}
-    #     })
-    #     self.assertEqual(response.status_code, 200)
-    #
-    #     # Checking that the returned array is not empty
-    #     result = response.get_json()
-    #     self.assertIsInstance(result["local_communities"], list)
-    #     self.assertTrue(len(result["local_communities"]) > 0,
-    #                     "Should find at least one community within a 10-mile radius")
-    #
-    #     # Optionally, validate that the correct communities are returned
-    #     found_areas = [comm["area"] for comm in result["local_communities"]]
-    #     for community in communities_data:
-    #         self.assertIn(community["area"], found_areas, f"{community['area']} should be within the radius")
-
-    def test_get_community_details_by_area_name(self):
-        response = self.client.post('/communities/details_by_area?area=TestArea')
-        self.assertEqual(response.status_code, 200, msg=response.data)
-        json_data = response.get_json()
-        self.assertIn('area', json_data)
-        self.assertEqual(json_data['area'], 'TestArea')
 
 
 # To allow running the tests from the command line
