@@ -11,7 +11,7 @@ dbase = DataBase()
 db = dbase.db
 users = db['users']
 
-log_file_path = os.path.join(config.application_file_path, "user.log")
+log_file_path = os.path.join(config.application_file_path, "logs/user/user.log")
 user_logger = setup_logger('user_logger', log_file_path)
 
 # Create a Flask Blueprint for the user routes

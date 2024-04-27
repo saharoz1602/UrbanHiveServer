@@ -15,7 +15,7 @@ communities = db['communities']
 users = db['users']
 events = db['events']
 
-log_file_path = os.path.join(config.application_file_path, "events.log")
+log_file_path = os.path.join(config.application_file_path, "logs/events/events.log")
 events_logger = setup_logger('events_logger', log_file_path)
 
 # Create a Flask Blueprint for the event routes

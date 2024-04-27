@@ -17,7 +17,7 @@ db = dbase.db
 communities = db['communities']
 users = db['users']  # Assuming users collection is also accessible
 
-log_file_path = os.path.join(config.application_file_path, "communities.log")
+log_file_path = os.path.join(config.application_file_path, "logs/communities/communities.log")
 community_logger = setup_logger('community_logger', log_file_path)
 
 # Create a Flask Blueprint for t the community routes
