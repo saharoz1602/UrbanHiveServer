@@ -26,6 +26,8 @@ except Exception as e:
 # Create a Flask Blueprint for the user routes
 user_bp = Blueprint('user', __name__)
 
+online_status = 1
+offline_status = 0
 
 @user_bp.route('/users', methods=['GET'])
 def get_users():
@@ -64,6 +66,7 @@ def add_user():
         user_data["friends"] = []
         user_data["requests"] = []
         user_data["radius"] = None
+        user_data["status"] = offline_status
 
         if users.find_one({"$or": [{"id": user_data["id"]}, {"email": user_data["email"]}]}):
             user_logger.error("User with this ID or email already exists, status code is 409")
@@ -174,6 +177,7 @@ def check_user_password():
 
     # Check if the password matches
     if user.get('password') == user_data['password']:
+        users.update_one({"id": user_data['id']}, {"$set": {"status": online_status}})
         return jsonify({"result": True}), 200
     else:
         return jsonify({"result": False}), 401  # Changed to 401 to indicate unauthorized access
@@ -410,3 +414,12 @@ def delete_friend():
         return jsonify({"error": "No changes made; check if the users are actually friends"}), 404
 
     return jsonify({"message": "Friendship deleted successfully"}), 200
+
+
+@user_bp.route('/user/<user_id>/offline', methods=['PUT'])
+def set_user_offline(user_id):
+    result = users.update_one({"id": user_id}, {"$set": {"status": offline_status}})
+    if result.matched_count == 0:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify({"message": "User set to offline"}), 200
+

@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import socket
@@ -9,11 +11,12 @@ from RESTCommunity import community_bp
 from RESTEvents import events_bp
 from RESTPosting import posting_bp
 from RESTNightWatch import night_watch_bp
-
+from Infrastructure.Files import config
 
 from flask import Flask, jsonify, request
 from bson import ObjectId
 import json
+
 
 class MongoJsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -27,8 +30,10 @@ def create_app():
     app.json_encoder = MongoJsonEncoder
     CORS(app)
 
-    # Setup logging
-    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+    log_directory = os.path.join(config.application_file_path, "logs", "app")
+    os.makedirs(log_directory, exist_ok=True)
+    log_file_path = os.path.join(log_directory, "app.log")
+    handler = RotatingFileHandler(log_file_path, maxBytes=10000, backupCount=3)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
