@@ -42,7 +42,7 @@ def add_community():
         return jsonify({"error": "the community with this location is already exists±!!"}), 400
 
     # Fetch manager's details
-    manager = users.find_one({"id": manager_id}, {"_id": 0, "id": 1, "name": 1, "location": 1})
+    manager = users.find_one({"id": manager_id}, {"_id": 0, "id": 1, "name": 1, "location": 1, "phoneNumber": 1})
     if not manager:
         community_logger.error("error: Manager not found, status code = 404")
         return jsonify({"error": "Manager not found"}), 404

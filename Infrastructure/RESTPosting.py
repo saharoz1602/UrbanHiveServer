@@ -16,7 +16,7 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 
-log_file_path = os.path.join(config.application_file_path, "posting.log")
+log_file_path = os.path.join(config.application_file_path, "logs/posting/posting.log")
 posting_logger = setup_logger('posting_logger', log_file_path)
 
 # Create a Flask Blueprint for the posting routes
