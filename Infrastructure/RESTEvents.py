@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request, abort
 
@@ -15,7 +16,6 @@ communities = db['communities']
 users = db['users']
 events = db['events']
 
-
 # Ensure the log file directory exists
 log_file_path = os.path.join(config.application_file_path, "logs/events/events.log")
 os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
@@ -25,8 +25,6 @@ try:
     events_logger = setup_logger('night_watch_logger', log_file_path)
 except Exception as e:
     print(f"Error setting up logger: {e}")
-
-
 
 # Create a Flask Blueprint for the event routes
 events_bp = Blueprint('events', __name__)
@@ -199,3 +197,127 @@ def delete_event():
     )
     events_logger.info("Event deleted successfully!, status code = 200")
     return jsonify({'message': 'Event deleted successfully!'}), 200
+
+
+@events_bp.route('/events/request_to_join_events', methods=['POST'])
+def request_to_join_events():
+    # Parse the incoming JSON data
+    data = request.get_json()
+
+    # Extract necessary information
+    user_id = data.get('user_id')
+    community_name = data.get('community_name')
+    event_id = data.get('event_id')
+
+    # Get the current date and time
+    current_date = datetime.utcnow()
+
+    # Verify the user exists and is part of the community
+    user = db.users.find_one({"id": user_id, "communityRequest.community_name": community_name})
+    if not user:
+        events_logger.error("User not found or not part of the community, status code = 404")
+        return jsonify({"error": "User not found or not part of the community"}), 404
+
+    # Verify the event exists within the specified community in the events collection
+    event = db.events.find_one({"event_id": event_id, "community_name": community_name})
+    if not event:
+        events_logger.error("Event not found in the specified community, status code = 404")
+        return jsonify({"error": "Event not found in the specified community"}), 404
+
+    # Create the request object
+    request_to_join = {
+        "user_id": user_id,
+        "event_id": event_id,
+        "community_name": community_name,
+        "date": current_date,
+        "status": "pending"
+    }
+
+    # Add the request to join to the event's requests_to_join array
+    db.events.update_one(
+        {"event_id": event_id},
+        {"$push": {"requests_to_join": request_to_join}}
+    )
+
+    # Update the user's document with the request
+    db.users.update_one(
+        {"id": user_id},
+        {"$push": {"requests": {"event_id": event_id, "date": current_date, "status": "pending"}}}
+    )
+
+    # Update the community's document with the request
+    db.communities.update_one(
+        {"community_name": community_name, "events.event_id": event_id},
+        {"$push": {"events.$.requests_to_join": request_to_join}}
+    )
+
+    return jsonify({"message": "Request to join event has been submitted"}), 200
+
+
+@events_bp.route('/events/confirm_or_decline_event_request', methods=['POST'])
+def confirm_or_decline_event_request():
+    # Parse the incoming JSON data
+    data = request.get_json()
+
+    # Extract necessary information
+    manager_id = data.get('manager_id')
+    event_id = data.get('event_id')
+    user_id = data.get('user_id')
+    community_name = data.get('community_name')
+    response = data.get('response')  # 1 for confirm, 0 for decline
+
+    # Validate manager existence and authorization
+    manager = db.users.find_one({"id": manager_id, "is_manager": True})
+    if not manager:
+        return jsonify({"error": "Manager not found or not authorized"}), 404
+
+    # Validate event existence
+    event = db.events.find_one({"event_id": event_id, "community_name": community_name})
+    if not event:
+        return jsonify({"error": "Event not found in the specified community"}), 404
+
+    # Validate user existence
+    user = db.users.find_one({"id": user_id})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    # Check if user has requested to join the event
+    request_to_join = next((request for requests in event['requests_to_join'] if requests['user_id'] == user_id), None)
+    if not request_to_join:
+        return jsonify({"error": "User has not requested to join the event"}), 400
+
+    # Update databases based on response (confirm or decline)
+    if response == 1:  # Confirm
+        # Add user to the event's attendees list
+        db.events.update_one(
+            {"event_id": event_id},
+            {"$push": {"attendees": user_id}}
+        )
+        # Remove request from event's requests_to_join list
+        db.events.update_one(
+            {"event_id": event_id},
+            {"$pull": {"requests_to_join": {"user_id": user_id}}}
+        )
+        # Update user's status for the event to attending
+        db.users.update_one(
+            {"id": user_id},
+            {"$push": {"attending_events": event_id}, "$pull": {"requests": {"event_id": event_id}}}
+        )
+        return jsonify({"message": "Event request has been confirmed successfully"}), 200
+    elif response == 0:  # Decline
+        # Remove request from event's requests_to_join list
+        db.events.update_one(
+            {"event_id": event_id},
+            {"$pull": {"requests_to_join": {"user_id": user_id}}}
+        )
+        # Remove request from user's requests list
+        db.users.update_one(
+            {"id": user_id},
+            {"$pull": {"requests": {"event_id": event_id}}}
+        )
+        return jsonify({"message": "Event request has been declined successfully"}), 200
+
+
+
+
+
+

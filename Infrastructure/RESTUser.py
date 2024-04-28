@@ -10,6 +10,7 @@ from Infrastructure.Files import config
 dbase = DataBase()
 db = dbase.db
 users = db['users']
+communities = db['communities']
 
 # Ensure the log file directory exists
 log_file_path = os.path.join(config.application_file_path, "logs/user/user.log")

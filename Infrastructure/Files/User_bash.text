@@ -347,3 +347,27 @@ Data base health check
 
 curl -X GET http://192.168.1.143:5000/health
 
+———————————————————
+request to join event
+
+curl -X POST http://192.168.1.143:5000/events/request_to_join_events \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "311285514",
+    "community_name": "NewArea",
+    "event_id": "699dbc43-5992-4528-9ccf-f73752db7045"
+}'
+
+———————————————————
+confirm or decline event request
+
+curl -X POST http://192.168.1.143:5000/events/confirm_or_decline_event_request \
+-H "Content-Type: application/json" \
+-d '{
+    "manager_id": "311156616",  # Assuming this is a manager's user ID
+    "event_id": "699dbc43-5992-4528-9ccf-f73752db7045",
+    "user_id": "311285514",      # Assuming this is a user ID from the users collection
+    "community_name": "NewArea",
+    "response": 1                # 1 to confirm, 0 to decline
+}'
+
