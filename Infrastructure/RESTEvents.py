@@ -267,7 +267,7 @@ def confirm_or_decline_event_request():
     response = data.get('response')  # 1 for confirm, 0 for decline
 
     # Validate manager existence and authorization
-    manager = db.users.find_one({"id": manager_id, "is_manager": True})
+    manager = db.users.find_one({"id": manager_id})
     if not manager:
         return jsonify({"error": "Manager not found or not authorized"}), 404
 
