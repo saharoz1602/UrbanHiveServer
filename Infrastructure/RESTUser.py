@@ -22,16 +22,19 @@ try:
 except Exception as e:
     print(f"Error setting up logger: {e}")
 
-
-
 # Create a Flask Blueprint for the user routes
 user_bp = Blueprint('user', __name__)
 
 online_status = 1
 offline_status = 0
 
+
 @user_bp.route('/users', methods=['GET'])
 def get_users():
+    """
+    Retrieves all user profiles, converts MongoDB ObjectId to string for JSON serialization.
+    """
+
     try:
         # Fetch all user documents from the MongoDB collection
         users_list = list(users.find())
@@ -50,6 +53,10 @@ def get_users():
 
 @user_bp.route('/user/', methods=['POST'])
 def add_user():
+    """
+    Adds a new user to the database after validating the presence of required fields.
+    """
+
     try:
         user_data = request.get_json()
 
@@ -162,6 +169,9 @@ def delete_user(user_id):
 
 @user_bp.route('/users/password', methods=['POST'])
 def check_user_password():
+    """
+    Validates user ID and password, updates the user's status to online if matched.
+    """
     # Retrieve ID and password from request JSON
     user_data = request.get_json()
 
@@ -186,6 +196,10 @@ def check_user_password():
 
 @user_bp.route('/user/change-password', methods=['POST'])
 def change_password():
+    """
+    Changes the user's password after validating the new password matches the verification.
+    """
+
     # Retrieve the password details and user id from the request JSON
     password_data = request.get_json()
 
@@ -222,6 +236,9 @@ def change_password():
 
 @user_bp.route('/user/<user_id>/radius', methods=['PUT'])
 def update_user_radius(user_id):
+    """
+    Updates the user's geographic search radius. Validates that the input is a float.
+    """
     # Get the radius from the request JSON
     data = request.get_json()
     radius = data.get('radius')
@@ -252,6 +269,10 @@ def update_user_radius(user_id):
 
 @user_bp.route('/user/add-friend', methods=['POST'])
 def add_friend():
+    """
+    Facilitates sending a friend request between two users, ensuring both exist and are distinct.
+    """
+
     data = request.get_json()
 
     # Extract sender_id and receiver_id from the request data
@@ -286,62 +307,12 @@ def add_friend():
         return jsonify({"error": str(e)}), 500
 
 
-# @user_bp.route('/user/respond-to-request', methods=['POST'])
-# def respond_to_request():
-#     data = request.get_json()
-#
-#     receiver_id = data.get('receiver_id')
-#     sender_id = data.get('sender_id')
-#     response = data.get('response')  # 1 for approve, 0 for decline
-#
-#     # Fetch both sender and receiver from the database
-#     sender = users.find_one({"id": sender_id})
-#
-#     receiver = users.find_one({"id": receiver_id})
-#
-#     if not sender or not receiver:
-#         return jsonify({"error": "Sender and receiver must exist"}), 404
-#
-#     # Check if the users are already friends or have pending friend requests
-#     if any(friend['friend id'] == receiver_id for friend in sender.get('friends', [])) or \
-#             any(friend['friend id'] == sender_id for friend in receiver.get('friends', [])) or \
-#             any(request['id'] == receiver_id for request in sender.get('requests', [])) or \
-#             any(request['id'] == sender_id for request in receiver.get('requests', [])):
-#         return jsonify({"error": "Users already connected or have pending friend requests"}), 409
-#
-#     if response == 1:  # Approve
-#         # Prepare friend information for both sender and receiver
-#         sender_friend_info = {
-#             "friend name": receiver["name"],
-#             "friend id": receiver_id,
-#             "friend location": receiver["location"]
-#         }
-#
-#         receiver_friend_info = {
-#             "friend name": sender["name"],
-#             "friend id": sender_id,
-#             "friend location": sender["location"]
-#         }
-#
-#         # Add each user to the other's friends list and remove the request
-#         users.update_one({"id": sender_id},
-#                          {"$push": {"friends": sender_friend_info}, "$pull": {"requests": {"id": receiver_id}}})
-#         users.update_one({"id": receiver_id},
-#                          {"$push": {"friends": receiver_friend_info}, "$pull": {"requests": {"id": sender_id}}})
-#
-#     elif response == 0:  # Decline
-#         # Just remove the friend request from both users
-#         users.update_one({"id": sender_id}, {"$pull": {"requests": {"id": receiver_id}}})
-#         users.update_one({"id": receiver_id}, {"$pull": {"requests": {"id": sender_id}}})
-#
-#     else:
-#         return jsonify({"error": "Invalid response"}), 400
-#
-#     return jsonify({"message": "Response processed successfully"}), 200
-
-
 @user_bp.route('/user/respond-to-request', methods=['POST'])
 def respond_to_request():
+    """
+    Handles the response to a friend request, allowing users to either accept or decline a friendship invitation.
+    """
+
     data = request.get_json()
 
     receiver_id = data.get('receiver_id')
@@ -388,6 +359,10 @@ def respond_to_request():
 
 @user_bp.route('/user/delete-friend', methods=['POST'])
 def delete_friend():
+    """
+     Deletes a friendship link between two users, removing each from the other's friend list.
+    """
+
     data = request.get_json()
 
     receiver_id = data.get('receiver_id')
@@ -419,8 +394,11 @@ def delete_friend():
 
 @user_bp.route('/user/<user_id>/offline', methods=['PUT'])
 def set_user_offline(user_id):
+    """
+    Sets the user's status to offline.
+    """
+
     result = users.update_one({"id": user_id}, {"$set": {"status": offline_status}})
     if result.matched_count == 0:
         return jsonify({"error": "User not found"}), 404
     return jsonify({"message": "User set to offline"}), 200
-

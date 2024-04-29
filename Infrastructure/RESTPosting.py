@@ -16,7 +16,6 @@ users = db['users']
 events = db['events']
 posting = db['posting']
 
-
 # Ensure the log file directory exists
 log_file_path = os.path.join(config.application_file_path, "logs/posting/posting.log")
 os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
@@ -27,14 +26,17 @@ try:
 except Exception as e:
     print(f"Error setting up logger: {e}")
 
-
-
 # Create a Flask Blueprint for the posting routes
 posting_bp = Blueprint('posting', __name__)
 
 
 @posting_bp.route('/posting/add_post', methods=['POST'])
 def add_post():
+    """
+    Adds a new post to both the posting collection and the corresponding community document.
+    Validates user membership in the community before adding the post.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -97,6 +99,11 @@ def add_post():
 
 @posting_bp.route('/posting/delete_post', methods=['DELETE'])
 def delete_post():
+    """
+    Deletes a post from both the posting collection and the corresponding community document.
+    Verifies the existence of the post before deletion.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -132,6 +139,11 @@ def delete_post():
 
 @posting_bp.route('/posting/add_comment_to_post', methods=['POST'])
 def add_comment_to_post():
+    """
+    Adds a comment to a specific post in the posting collection and updates the community document.
+    Validates the existence of the post and the user before adding the comment.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -184,6 +196,11 @@ def add_comment_to_post():
 
 @posting_bp.route('/posting/delete_comment_from_post', methods=['DELETE'])
 def delete_comment_from_post():
+    """
+    Removes a comment from a specific post within the posting collection and updates the community document.
+    Verifies the existence of the comment before removal.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -228,5 +245,3 @@ def delete_comment_from_post():
 
     posting_logger.info(f"Comment deleted successfully, status code is 200")
     return jsonify({"message": "Comment deleted successfully"}), 200
-
-

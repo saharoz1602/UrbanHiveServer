@@ -32,6 +32,11 @@ events_bp = Blueprint('events', __name__)
 
 @events_bp.route('/events/add_event', methods=['POST'])
 def add_event():
+    """
+    Creates an event based on provided data, updates related community and user documents,
+    and sends out invitations.
+    """
+
     data = request.json
 
     # Retrieve event information from the request
@@ -107,6 +112,10 @@ def add_event():
 
 @events_bp.route('/events/get_all_events', methods=['GET'])
 def get_all_events():
+    """
+    Retrieves all events and returns them in a JSON-serializable format.
+    """
+
     all_events = events.find({})  # Retrieve all documents from the events collection
     # Convert the events to a list of dicts, excluding the '_id' field to make them JSON serializable
     events_list = [{key: value for key, value in event.items() if key != '_id'} for event in all_events]
@@ -116,6 +125,10 @@ def get_all_events():
 
 @events_bp.route('/events/respond_to_event_request', methods=['POST'])
 def respond_to_event_request():
+    """
+    Handles a user's response to an event invitation.
+    """
+
     # Parse the incoming JSON data
     data = request.get_json()
 
@@ -167,6 +180,10 @@ def respond_to_event_request():
 
 @events_bp.route('/events/delete_event', methods=['POST'])
 def delete_event():
+    """
+    Deletes an event and removes all related references in user and community documents.
+    """
+
     data = request.json
     event_id_to_delete = data['event_id']
 
@@ -201,6 +218,10 @@ def delete_event():
 
 @events_bp.route('/events/request_to_join_events', methods=['POST'])
 def request_to_join_events():
+    """
+    Handles a user's request to join an event, including updating the event and user documents.
+    """
+
     # Parse the incoming JSON data
     data = request.get_json()
 
@@ -256,6 +277,10 @@ def request_to_join_events():
 
 @events_bp.route('/events/confirm_or_decline_event_request', methods=['POST'])
 def confirm_or_decline_event_request():
+    """
+    Confirms or declines a user's request to join an event based on the manager's response.
+    """
+
     # Parse the incoming JSON data
     data = request.get_json()
 

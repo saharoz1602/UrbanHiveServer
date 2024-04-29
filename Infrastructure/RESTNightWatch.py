@@ -35,6 +35,11 @@ night_watch_bp = Blueprint('night_watch', __name__)
 
 @night_watch_bp.route('/night_watch/add_night_watch', methods=['POST'])
 def add_new_night_watch():
+    """
+    Adds a new night watch based on provided data, ensuring the initiator is part of the community
+    and that there are no conflicting night watches on the same date for the community.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -118,6 +123,10 @@ def add_new_night_watch():
 
 @night_watch_bp.route('/night_watch/join_watch', methods=['POST'])
 def join_night_watch():
+    """
+    Allows a candidate to join an existing night watch, ensuring there are available positions.
+    """
+
     # Parse the JSON data from the request
     data = request.get_json()
 
@@ -173,6 +182,10 @@ def join_night_watch():
 
 @night_watch_bp.route('/night_watch/close_night_watch', methods=['POST'])
 def close_night_watch():
+    """
+    Closes an existing night watch by deleting it from the database and updating related documents.
+    """
+
     data = request.get_json()
     watch_id = data.get('watch_id')
 
@@ -210,6 +223,10 @@ def close_night_watch():
 
 @night_watch_bp.route('/night_watch/calculate_position_for_watch', methods=['POST'])
 def calculate_position_for_watch():
+    """
+    Calculates positions for members of a night watch based on the specified radius and positions amount.
+    """
+
     data = request.get_json()
     watch_id = data.get('watch_id')
 
@@ -265,6 +282,10 @@ def calculate_position_for_watch():
 
 @night_watch_bp.route('/night_watch/by_community', methods=['POST'])
 def get_night_watches_by_community():
+    """
+        Retrieves all future night watches for a specified community, ensuring the community exists.
+    """
+
     data = request.get_json()
     community_name = data.get('community_name')
 

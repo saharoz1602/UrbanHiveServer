@@ -33,6 +33,10 @@ community_bp = Blueprint('community', __name__)
 
 @community_bp.route('/communities/add_community', methods=['POST'])
 def add_community():
+    """
+    Endpoint to add a new community. Validates uniqueness by area and location,
+    adds the community manager to the members and managers list, and returns the new community ID.
+    """
     data = request.json
     manager_id = data.get('manager_id')
     area = data.get('area')
@@ -82,6 +86,10 @@ def add_community():
 
 @community_bp.route('/communities/add_user_to_community', methods=['POST'])
 def add_user_to_community():
+    """
+    Endpoint to send a community join request to another user. Updates community request status
+    for both the sender and receiver.
+    """
     data = request.json
     receiver_id = data.get('receiver_id')
     sender_id = data.get('sender_id')
@@ -112,6 +120,10 @@ def add_user_to_community():
 
 @community_bp.route('/communities/respond_to_community_request', methods=['POST'])
 def respond_to_community_request():
+    """
+    Endpoint for a user to respond to a community join request. Handles both acceptance
+    and rejection of the request.
+    """
     data = request.json
     receiver_id = data.get('receiver_id')
     sender_id = data.get('sender_id')
@@ -169,6 +181,10 @@ def respond_to_community_request():
 
 @community_bp.route('/communities/delete_user_from_community', methods=['POST'])
 def delete_user_from_community():
+    """
+    Endpoint to remove a user from a community. Updates both the community members list and
+    the user's list of communities.
+    """
     data = request.json
     user_to_delete_id = data.get('user_to_delete_id')
     area = data.get('area')
@@ -188,6 +204,10 @@ def delete_user_from_community():
 
 @community_bp.route('/communities/get_communities_by_radius_and_location', methods=['POST'])
 def get_communities_by_radius_and_location():
+    """
+    Retrieves communities within a specified radius from a given location. Utilizes a
+    RadiusCalculator for determining the distance.
+    """
     data = request.json
     rd = RadiusCalculator()
     radius = data["radius"]
@@ -231,6 +251,11 @@ def get_communities_by_radius_and_location():
 
 @community_bp.route('/communities/details_by_area', methods=['POST'])
 def get_community_details_by_area_name():
+    """
+    Provides detailed information for a community based on its area name. Ensures the area
+    name is provided and the community exists.
+    """
+
     # Extract area name from query parameter
     area = request.args.get('area')
 
@@ -252,6 +277,10 @@ def get_community_details_by_area_name():
 
 @community_bp.route('/communities/get_all', methods=['GET'])
 def get_communities():
+    """
+    Retrieves all communities from the database and returns them in a list.
+    """
+
     try:
         # Retrieve all community documents from the database
         all_communities = communities.find({})
