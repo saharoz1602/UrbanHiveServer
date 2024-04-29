@@ -2,12 +2,12 @@ import json
 import sys
 import os
 
-# Absolute path to the directory where app2.py is located
+# Absolute path to the directory where app.py is located
 infrastructure_path = '/Users/saharoz/Desktop/Study/personal/UrbanHiveServer/Infrastructure'
 
 sys.path.insert(0, infrastructure_path)
 
-from Infrastructure.app2 import create_app  # This should work now that we've added the correct path
+from Infrastructure.app import create_app  # This should work now that we've added the correct path
 from flask_pymongo import PyMongo
 from flask_testing import TestCase
 
@@ -15,7 +15,7 @@ from flask_testing import TestCase
 class MyTest(TestCase):
 
     def create_app(self):
-        # Create the Flask application using the factory from app2.py
+        # Create the Flask application using the factory from app.py
         # This function should return the Flask app instance
         app = create_app()
         # Configure the MongoDB settings for testing

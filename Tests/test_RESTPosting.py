@@ -3,12 +3,12 @@ import sys
 import os
 import uuid
 
-# Absolute path to the directory where app2.py is located
+# Absolute path to the directory where app.py is located
 infrastructure_path = '/Users/saharoz/Desktop/Study/personal/UrbanHiveServer/Infrastructure'
 
 sys.path.insert(0, infrastructure_path)
 
-from Infrastructure.app2 import create_app
+from Infrastructure.app import create_app
 from flask_pymongo import PyMongo
 from flask_testing import TestCase
 
