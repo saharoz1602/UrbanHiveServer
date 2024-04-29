@@ -8,7 +8,7 @@ infrastructure_path = '/Users/saharoz/Desktop/Study/personal/UrbanHiveServer/Inf
 
 sys.path.insert(0, infrastructure_path)
 
-from Infrastructure.app import create_app  # This should work now that we've added the correct path
+from Infrastructure.app import create_app
 from flask_pymongo import PyMongo
 from flask_testing import TestCase
 
